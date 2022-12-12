@@ -47,7 +47,7 @@ enum ZegoUIKitLiveAudioIconSetType: String, Hashable {
     
     // MARK: - Image handling
     func load() -> UIImage {
-        let image = UIImage.resource.loadImage(name: self.rawValue, bundleName: "ZegoUIKitPrebuiltLiveAudio") ?? UIImage()
+        let image = UIImage.resource.loadImage(name: self.rawValue, bundleName: "ZegoUIKitPrebuiltLiveAudioRoom") ?? UIImage()
         return image
     }
 }
