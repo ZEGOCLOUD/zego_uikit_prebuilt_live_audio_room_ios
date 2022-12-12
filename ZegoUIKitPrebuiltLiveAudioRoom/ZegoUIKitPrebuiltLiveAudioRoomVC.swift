@@ -7,6 +7,7 @@
 
 import UIKit
 import ZegoUIKitSDK
+import ZegoUIKitSignalingPlugin
 
 enum ZegoLiveAudioSeatActionType: Int {
     case take
