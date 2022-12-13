@@ -57,7 +57,7 @@ To build a live audio app from scratch, you may check our [Voice Call](http://do
 
 ### Add dependencies
 
-Do the following to add the `ZegoUIKitPrebuiltLiveAudioRoom` and `ZegoUIKitSignalingPlugin` dependencies:
+Do the following to add the `ZegoUIKitPrebuiltLiveAudioRoom` dependency:
 
 - Open Terminal, navigate to your project's root directory, and run the following to create a `podfile`: 
 
