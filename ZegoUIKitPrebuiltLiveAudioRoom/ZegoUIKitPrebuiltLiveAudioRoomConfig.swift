@@ -47,7 +47,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
 }
 
 public class ZegoLiveAudioRoomSeatConfig: NSObject {
-    public var showSoundWavesInAudioMode: Bool = true
+    public var showSoundWaveInAudioMode: Bool = true
     public var backgroudColor: UIColor?
     public var backgroundImage: UIImage?
 }
