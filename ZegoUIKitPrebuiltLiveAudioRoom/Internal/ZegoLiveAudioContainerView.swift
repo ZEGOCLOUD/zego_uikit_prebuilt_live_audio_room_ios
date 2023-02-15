@@ -9,7 +9,7 @@ import UIKit
 import ZegoUIKitSDK
 
 protocol ZegoLiveAudioContainerViewDelegate: AnyObject {
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView?
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
     func onSeatItemClick(_ seatModel: ZegoLiveAudioSeatModel?)
 }
 
@@ -20,7 +20,7 @@ class ZegoSeatRowModel: NSObject {
 }
 
 protocol ZegoSeatRowViewDelegate: AnyObject {
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView?
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
     func onSeatItemClick(_ seatModel: ZegoLiveAudioSeatModel?)
 }
 
@@ -174,7 +174,7 @@ class ZegoSeatRowView: UIView, ZegoLiveAudioSeatItemViewDelegate {
     }
     
     //MARK: -ZegoLiveAudioSeatItemViewDelegate
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView? {
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView? {
         return self.delegate?.getSeatForegroundView(userInfo, seatIndex: seatIndex)
     }
     
@@ -309,7 +309,7 @@ extension ZegoLiveAudioContainerView: ZegoSeatRowViewDelegate {
     
     
     //MARK: - ZegoSeatRowViewDelegate
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView? {
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView? {
         return self.delegate?.getSeatForegroundView(userInfo, seatIndex: seatIndex)
     }
     

@@ -16,8 +16,9 @@ enum ZegoLiveAudioSeatActionType: Int {
 }
 
 @objc public protocol ZegoUIKitPrebuiltLiveAudioRoomVCDelegate: AnyObject {
-    @objc optional func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView?
+    @objc optional func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
     @objc optional func onLeaveLiveAudioRoom()
+    @objc optional func onUserCountOrPropertyChanged(_ users: [ZegoUIKitUser]?)
 }
 
 public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
@@ -69,12 +70,14 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         self.config = config
         ZegoUIKit.getSignalingPlugin().installPlugins([ZegoUIKitSignalingPlugin()])
         ZegoUIKit.shared.initWithAppID(appID: appID, appSign: appSign)
+        ZegoUIKit.shared.setAudioVideoResourceMode(.RTCOnly)
         ZegoUIKit.getSignalingPlugin().initWithAppID(appID: appID, appSign: appSign)
-        ZegoUIKit.shared.localUserInfo = ZegoUIKitUser.init(userID, userName)
+//        ZegoUIKit.shared.localUserInfo = ZegoUIKitUser.init(userID, userName)
         ZegoUIKit.shared.addEventHandler(self.help)
         self.userID = userID
         self.userName = userName
         self.roomID = roomID
+        
         if config.role == .host {
             self.currentHost = ZegoUIKitUser.init(userID, userName)
             self.bottomBar.currentHost = self.currentHost
@@ -208,6 +211,9 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
                     guard let data = data else { return }
                     if data["code"] as! Int == 0  {
                         self.currentRole = .audience
+                        //set avata  url
+                        ZegoUIKit.getSignalingPlugin().setUsersInRoomAttributes("avatar", value: self.config.userAvatarUrl ?? "", userIDs: [userID], roomID: roomID, callBack: nil)
+                        self.setCurrentUserAttributes()
                         self.joinRoomAfterUpdateRoomInfo()
                         self.queryInRoomUserAttribute()
                     } else {
@@ -215,6 +221,16 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
                     }
                 }
             }
+        }
+    }
+    
+    private func setCurrentUserAttributes() {
+        guard let userInRoomAttributes = config.userInRoomAttributes,
+              let userID = userID,
+              let roomID = roomID
+        else { return }
+        for (key, value) in userInRoomAttributes {
+            ZegoUIKit.getSignalingPlugin().setUsersInRoomAttributes(key, value: value, userIDs: [userID], roomID: roomID, callBack: nil)
         }
     }
     
@@ -340,12 +356,12 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
     }
     
     //MARK: -ZegoLiveAudioContainerViewDelegate
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView? {
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView? {
         if let foregroundView = self.delegate?.getSeatForegroundView?(userInfo, seatIndex: seatIndex) {
             return foregroundView
         } else {
             // user nomal foregroundView
-            let nomalForegroundView: ZegoLiveAudioNormalForegroundView = ZegoLiveAudioNormalForegroundView.init(frame: .zero)
+            let nomalForegroundView: ZegoLiveAudioNormalForegroundView = ZegoLiveAudioNormalForegroundView(frame: .zero, userID: userInfo?.userID, delegate: nil)
             nomalForegroundView.userInfo = userInfo
             if self.config.role == .host {
                 nomalForegroundView.isHost = self.currentHost?.userID == userInfo?.userID
@@ -653,6 +669,10 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
             }
         }
         self.liveAudioVC?.updateLayout()
+    }
+    
+    func onUserCountOrPropertyChanged(_ userList: [ZegoUIKitUser]?) {
+        self.liveAudioVC?.delegate?.onUserCountOrPropertyChanged?(userList)
     }
     
 }

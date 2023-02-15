@@ -9,7 +9,7 @@ import UIKit
 import ZegoUIKitSDK
 
 protocol ZegoLiveAudioSeatItemViewDelegate: AnyObject {
-    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> UIView?
+    func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
     func onSeatItemClick(_ seatModel: ZegoLiveAudioSeatModel?)
 }
 
@@ -113,7 +113,7 @@ class ZegoLiveAudioSeatItemView: UIView {
 }
 
 extension ZegoLiveAudioSeatItemView: AudioVideoViewDelegate {
-    func getForegroundView(_ userInfo: ZegoUIKitUser?) -> UIView? {
+    func getForegroundView(_ userInfo: ZegoUIKitUser?) -> ZegoBaseAudioVideoForegroundView? {
         if userInfo?.userID == self.currSeatModel?.userID {
             self.currSeatModel?.userName = userInfo?.userName ?? ""
         }

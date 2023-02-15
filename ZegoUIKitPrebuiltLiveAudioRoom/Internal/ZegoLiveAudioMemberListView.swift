@@ -86,7 +86,7 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
         label.frame = CGRect(x: 16, y: 26, width: 150, height: 22)
         label.textColor = UIColor.white
         label.font = UIFont.systemFont(ofSize: 16)
-        label.text = String(format: "%@·%d", self.translationText?.memberListTitle ?? "Attendance",(ZegoUIKit.shared.userList.count))
+        label.text = String(format: "%@·%d", self.translationText?.memberListTitle ?? "Audience",(ZegoUIKit.shared.userList.count))
         view.addSubview(label)
         return view
     }

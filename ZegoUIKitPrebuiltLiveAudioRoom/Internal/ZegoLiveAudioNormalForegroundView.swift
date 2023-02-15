@@ -8,7 +8,7 @@
 import UIKit
 import ZegoUIKitSDK
 
-class ZegoLiveAudioNormalForegroundView: UIView {
+class ZegoLiveAudioNormalForegroundView: ZegoBaseAudioVideoForegroundView {
     
     lazy var hostIcon: UIImageView = {
         let imageView = UIImageView.init(image: ZegoUIKitLiveAudioIconSetType.seat_host_icon.load())
@@ -19,10 +19,6 @@ class ZegoLiveAudioNormalForegroundView: UIView {
         didSet {
             self.hostIcon.isHidden = !isHost
         }
-    }
-    
-    func printPointer<T>(ptr: UnsafePointer<T>) {
-        print(ptr)
     }
     
     lazy var userNameLabel: UILabel = {
@@ -51,9 +47,8 @@ class ZegoLiveAudioNormalForegroundView: UIView {
         }
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        ZegoUIKit.shared.addEventHandler(self)
+    override init(frame: CGRect, userID: String?, delegate: ZegoBaseAudioVideoForegroundViewDelegate?) {
+        super.init(frame: frame, userID: userID, delegate: delegate)
         self.addSubview(self.foregroundImageView)
         self.hostIcon.isHidden = true
         self.addSubview(self.hostIcon)
@@ -78,10 +73,8 @@ class ZegoLiveAudioNormalForegroundView: UIView {
         self.userNameLabel.sizeToFit()
         self.userNameLabel.frame = CGRect(x: 5, y: self.hostIcon.frame.maxY + 2, width: self.frame.size.width - 10, height: self.userNameLabel.bounds.height)
     }
-}
-
-extension ZegoLiveAudioNormalForegroundView: ZegoUIKitEventHandle {
-    func onMicrophoneOn(_ user: ZegoUIKitUser, isOn: Bool) {
+    
+    override func onMicrophoneOn(_ user: ZegoUIKitUser, isOn: Bool) {
         if user.userID == self.userInfo?.userID {
             self.foregroundImageView.isHidden = isOn
         }

@@ -23,6 +23,9 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var seatConfig: ZegoLiveAudioRoomSeatConfig = ZegoLiveAudioRoomSeatConfig()
     public var hostSeatIndexes: [Int] = [0]
     
+    public var userAvatarUrl: String?
+    public var userInRoomAttributes:[String : String]?
+    
     public static func host() -> ZegoUIKitPrebuiltLiveAudioRoomConfig {
         let config = ZegoUIKitPrebuiltLiveAudioRoomConfig()
         config.role = .host
@@ -109,7 +112,7 @@ public class ZegoTranslationText: NSObject {
     public var takeSeatMenuDialogButton: String = "Take the seat"
     public var leaveSeatMenuDialogButton: String = "Leave the seat"
     public var cancelMenuDialogButton: String = "Cancel"
-    public var memberListTitle: String = "Attendance"
+    public var memberListTitle: String = "Audience"
     public var removeSpeakerFailedToast: String = "Failed to remove %@ from seat"
     public var microphonePermissionSettingDialogInfo: ZegoDialogInfo = ZegoDialogInfo.init("Can not use Microphone!", message: "Please enable microphone access in the system settings!", cancelButtonName: "Cancel", confirmButtonName: "Settings")
     public var leaveSeatDialogInfo: ZegoDialogInfo = ZegoDialogInfo.init("Leave the seat", message: "Are you sure to leave the seat?", cancelButtonName: "Cancel", confirmButtonName: "OK")
