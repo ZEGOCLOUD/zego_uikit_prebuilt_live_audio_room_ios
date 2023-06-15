@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import ZegoUIKitSDK
+import ZegoUIKit
 
 public class ZegoMemberButton: UIButton {
     

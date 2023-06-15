@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import ZegoUIKitSDK
+import ZegoUIKit
 
 protocol ZegoLiveAudioRoomBottomBarDelegate: AnyObject {
     func onMenuBarMoreButtonClick(_ buttonList: [UIView])

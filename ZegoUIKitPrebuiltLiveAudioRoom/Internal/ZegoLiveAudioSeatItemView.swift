@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import ZegoUIKitSDK
+import ZegoUIKit
 
 protocol ZegoLiveAudioSeatItemViewDelegate: AnyObject {
     func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
