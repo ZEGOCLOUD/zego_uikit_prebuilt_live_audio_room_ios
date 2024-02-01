@@ -15,10 +15,19 @@ enum ZegoLiveAudioSeatActionType: Int {
     case remove
 }
 
-@objc public protocol ZegoUIKitPrebuiltLiveAudioRoomVCDelegate: AnyObject {
-    @objc optional func getSeatForegroundView(_ userInfo: ZegoUIKitUser?, seatIndex: Int) -> ZegoBaseAudioVideoForegroundView?
-    @objc optional func onLeaveLiveAudioRoom()
-    @objc optional func onUserCountOrPropertyChanged(_ users: [ZegoUIKitUser]?)
+extension ZegoUIKitPrebuiltLiveAudioRoomVC: LiveAudioRoomVCApi {
+    
+    public func addButtonToMenuBar(_ button: UIButton, role: ZegoLiveAudioRoomRole) {
+        self.bottomBar.addButtonToMenuBar(button, role: role)
+    }
+    
+    public func clearBottomBarExtendButtons(_ role: ZegoLiveAudioRoomRole) {
+        self.bottomBar.clearBottomBarExtendButtons(role)
+    }
+    
+    public func setBackgroundView(_ view: UIView) {
+        self.backgroundView.setBackgroundView(view)
+    }
 }
 
 public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
@@ -58,6 +67,15 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     var roomProperties: [String : String] = [:]
     var isSwitchingSeat: Bool = false
 
+    
+    /// Initialization of chat room
+    /// - Parameters:
+    ///   - appID: Your appID
+    ///   - appSign: Your appSign
+    ///   - userID: User unique identification
+    ///   - userName: userName
+    ///   - roomID: Chat room ID
+    ///   - config: Personalized configuration
     @objc public init(_ appID: UInt32, appSign: String, userID: String, userName: String, roomID: String, config: ZegoUIKitPrebuiltLiveAudioRoomConfig) {
         super.init(nibName: nil, bundle: nil)
         if (config.role == .host || config.role == .speaker) && config.takeSeatIndexWhenJoining < 0 {
@@ -152,10 +170,6 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.setupLayout()
-    }
-    
-    @objc public func addButtonToMenuBar(_ button: UIButton, role: ZegoLiveAudioRoomRole) {
-        self.bottomBar.addButtonToMenuBar(button, role: role)
     }
 
     @objc func keyboardWillChangeFrame(node : Notification){
@@ -301,9 +315,6 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         self.view.endEditing(true)
     }
     
-    @objc public func clearBottomBarExtendButtons(_ role: ZegoLiveAudioRoomRole) {
-        self.bottomBar.clearBottomBarExtendButtons(role)
-    }
     
     deinit {
         print("===ZegoUIKitPrebuiltLiveAudioVC deinit")
@@ -311,10 +322,6 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
 }
 
 extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, ZegoLiveAudioSheetViewDelegate {
-    
-    public func setBackgroundView(_ view: UIView) {
-        self.backgroundView.setBackgroundView(view)
-    }
     
     func joinRoomAfterUpdateRoomInfo() {
         guard let userID = self.userID else { return }
