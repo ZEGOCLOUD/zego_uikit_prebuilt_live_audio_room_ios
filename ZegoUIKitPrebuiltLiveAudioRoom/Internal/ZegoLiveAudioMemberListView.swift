@@ -64,7 +64,8 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
         cell.user = userInfo
         cell.currentHost = self.currentHost
         cell.backgroundColor = UIColor.clear
-        
+        cell.translationText = self.translationText
+      
         if userInfo.userID == self.currentHost?.userID {
             cell.role = .host
         } else if let userID = userInfo.userID, userInfo.inRoomAttributes.values.contains(userID) {
@@ -79,7 +80,7 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
     func getMemberListItemHeight(_ userInfo: ZegoUIKitUser) -> CGFloat {
         return 70
     }
-    
+  
     func getMemberListviewForHeaderInSection(_ tableView: UITableView, section: Int) -> UIView? {
         let view = UIView()
         let label = UILabel()

@@ -8,6 +8,11 @@
 import UIKit
 import ZegoUIKit
 
+@objc public enum ZegoLanguage : UInt32 {
+  case english
+  case chinese
+}
+
 @objcMembers
 public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     
@@ -15,16 +20,37 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var takeSeatIndexWhenJoining: Int = -1
     public var turnOnMicrophoneWhenJoining: Bool = false
     public var useSpeakerWhenJoining: Bool = true
-    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [ .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
+    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
     
-    public var confirmDialogInfo: ZegoLeaveConfirmDialogInfo?
-    public var translationText: ZegoTranslationText = ZegoTranslationText()
+    var translationText: ZegoTranslationText = ZegoTranslationText()
     public var layoutConfig: ZegoLiveAudioRoomLayoutConfig = ZegoLiveAudioRoomLayoutConfig()
     public var seatConfig: ZegoLiveAudioRoomSeatConfig = ZegoLiveAudioRoomSeatConfig()
     public var hostSeatIndexes: [Int] = [0]
     
     public var userAvatarUrl: String?
     public var userInRoomAttributes:[String : String]?
+    public var languageCode: ZegoLanguage = .english {
+      didSet{
+        if languageCode == .chinese {
+        translationText = ZegoTranslationTextZH()
+        } else {
+        translationText = ZegoTranslationText()
+        }
+      }
+    }
+ 
+    public lazy var confirmDialogInfo: ZegoLeaveConfirmDialogInfo? = {
+      let confirmDialogInfo = ZegoLeaveConfirmDialogInfo()
+      confirmDialogInfo.title = self.translationText.leaveConfirmDialogTitle
+      confirmDialogInfo.message = self.translationText.leaveConfirmDialogMessage
+      confirmDialogInfo.cancelButtonName = self.translationText.cancelMenuDialogButton
+      confirmDialogInfo.confirmButtonName = self.translationText.leaveRoomDialogConfirmButtonTitle
+      if self.role == .host {
+        return confirmDialogInfo
+      } else {
+        return nil
+      }
+    }()
     
     public static func host() -> ZegoUIKitPrebuiltLiveAudioRoomConfig {
         let config = ZegoUIKitPrebuiltLiveAudioRoomConfig()
@@ -32,12 +58,12 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
         config.takeSeatIndexWhenJoining = 0
         config.turnOnMicrophoneWhenJoining = true
         
-        let confirmDialogInfo = ZegoLeaveConfirmDialogInfo()
-        confirmDialogInfo.title = "Leave the room"
-        confirmDialogInfo.message = "Are you sure to leave the  room?"
-        confirmDialogInfo.cancelButtonName = "Cancel"
-        confirmDialogInfo.confirmButtonName = "OK"
-        config.confirmDialogInfo = confirmDialogInfo
+//        let confirmDialogInfo = ZegoLeaveConfirmDialogInfo()
+//        confirmDialogInfo.title = self.translationText.leaveConfirmDialogTitle
+//        confirmDialogInfo.message = self.translationText.leaveConfirmDialogMessage
+//        confirmDialogInfo.cancelButtonName = self.translationText.cancelMenuDialogButton
+//        confirmDialogInfo.confirmButtonName = self.translationText.leaveRoomDialogConfirmButtonTitle
+//        config.confirmDialogInfo = confirmDialogInfo
         
         return config
     }
@@ -47,6 +73,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
         config.role = .audience
         return config
     }
+
 }
 
 public class ZegoLiveAudioRoomSeatConfig: NSObject {
@@ -93,10 +120,6 @@ public class ZegoBottomMenuBarConfig: NSObject {
     
     public var maxCount: UInt = 5
     
-    override init() {
-        super.init()
-    }
-    
     public convenience init(hostButtons: [ZegoMenuBarButtonName], speakerButtons: [ZegoMenuBarButtonName], audienceButtons: [ZegoMenuBarButtonName]) {
         self.init()
         self.hostButtons = hostButtons
@@ -108,34 +131,89 @@ public class ZegoBottomMenuBarConfig: NSObject {
 
 public class ZegoTranslationText: NSObject {
     
-    public var removeSpeakerMenuDialogButton: String = "Remove %@ from seat"
-    public var takeSeatMenuDialogButton: String = "Take the seat"
-    public var leaveSeatMenuDialogButton: String = "Leave the seat"
-    public var cancelMenuDialogButton: String = "Cancel"
-    public var memberListTitle: String = "Audience"
-    public var removeSpeakerFailedToast: String = "Failed to remove %@ from seat"
-    public var microphonePermissionSettingDialogInfo: ZegoDialogInfo = ZegoDialogInfo.init("Can not use Microphone!", message: "Please enable microphone access in the system settings!", cancelButtonName: "Cancel", confirmButtonName: "Settings")
-    public var leaveSeatDialogInfo: ZegoDialogInfo = ZegoDialogInfo.init("Leave the seat", message: "Are you sure to leave the seat?", cancelButtonName: "Cancel", confirmButtonName: "OK")
-    public var removeSpeakerFromSeatDialogInfo: ZegoDialogInfo = ZegoDialogInfo.init("Remove the speaker", message: "Are you sure to remove %@ from the seat?", cancelButtonName: "Cancel", confirmButtonName: "OK")
+    public var removeSpeakerMenuDialogButton : String = "Remove %@ from seat"
+    public var takeSeatMenuDialogButton : String = "Take the seat"
+    public var leaveSeatMenuDialogButton : String = "Leave the seat"
+    public var cancelMenuDialogButton : String = "Cancel"
+    public var memberListTitle : String = "Audience"
+    public var removeSpeakerFailedToast : String = "Failed to remove %@ from seat"
+  
+    public var microphonePermissionTitle : String = "Can not use Microphone!"
+    public var microphonePermissionMessage : String = "Please enable microphone access in the system settings!"
+    public var microphonePermissionConfirmButtonName : String = "Settings"
+    
+    public var leaveSeatDialogInfoMessage : String = "Are you sure to leave the seat?"
+    
+    public var removeSpeakerFromSeatDialogInfoTitle : String = "Remove the speaker"
+    public var removeSpeakerFromSeatDialogInfoMessage : String = "Are you sure to remove %@ from the seat?"
+
+  
+    public var leaveConfirmDialogMessage : String = "Are you sure to leave the room?"
+    public var leaveConfirmDialogTitle : String = "Leave the room"
+  
+    public var leaveRoomDialogConfirmButtonTitle : String = "OK"
+  
+    public var audioMemberListUserIdentifyHost : String = "(Host)"
+    public var audioMemberListUserIdentifyYourHost : String = "(You,Host)"
+    public var audioMemberListUserIdentifyYourSpeaker : String = "(You,Speaker)"
+    public var audioMemberListUserIdentifySpeaker : String = "(Speaker)"
+    public var audioMemberListUserIdentifyYou : String = "(You)"
+
+}
+
+public class ZegoTranslationTextZH :ZegoTranslationText {
+    override public init() {
+        super.init()
+        removeSpeakerMenuDialogButton = "将 %@ 移下麦位"
+        takeSeatMenuDialogButton = "上麦"
+        leaveSeatMenuDialogButton = "下麦"
+        cancelMenuDialogButton = "取消"
+        memberListTitle = "观众"
+        removeSpeakerFailedToast = "无法将 %@ 移下麦位"
+
+        leaveConfirmDialogMessage = "您确定要离开房间吗？"
+        leaveConfirmDialogTitle = "离开房间"
+        leaveRoomDialogConfirmButtonTitle = "确定"
+        
+        microphonePermissionTitle = "无法使用麦克风！"
+        microphonePermissionMessage = "请在系统设置中启用麦克风访问！"
+        microphonePermissionConfirmButtonName = "设置"
+        
+        leaveSeatDialogInfoMessage = "您确定要下麦吗？"
+        
+        removeSpeakerFromSeatDialogInfoTitle = "从麦位上移除"
+        removeSpeakerFromSeatDialogInfoMessage = "您确定要将 %@ 从麦位上移除吗？"
+      
+        audioMemberListUserIdentifyHost = "(房主)"
+        audioMemberListUserIdentifyYourHost = "(我,房主)"
+        audioMemberListUserIdentifyYourSpeaker = "(我,连麦中)"
+        audioMemberListUserIdentifySpeaker = "(连麦中)"
+        audioMemberListUserIdentifyYou = "(您)"
+    }
 }
 
 
 public class ZegoDialogInfo: NSObject {
+  
     public var title: String?
     public var message: String?
-    public var cancelButtonName: String = "Cancel"
-    public var confirmButtonName: String = "OK"
-    
-    public override init() {
+    public var cancelButtonName:String?
+    public var confirmButtonName:String?
+    public var translationText: ZegoTranslationText = ZegoTranslationText()
+    private override init() {
         super.init()
     }
     
-    public convenience init(_ title: String, message: String, cancelButtonName: String = "Cancel", confirmButtonName: String = "OK") {
+    public convenience init(_ title: String, message: String, cancelButtonName: String?, confirmButtonName: String?,languageCode: ZegoLanguage) {
         self.init()
-        
+        if languageCode == .chinese {
+        translationText = ZegoTranslationTextZH()
+        } else {
+        translationText = ZegoTranslationText()
+        }
         self.title = title
         self.message = message
-        self.cancelButtonName = cancelButtonName
-        self.confirmButtonName = confirmButtonName
+        self.cancelButtonName = cancelButtonName ?? translationText.cancelMenuDialogButton
+        self.confirmButtonName = confirmButtonName ?? translationText.leaveRoomDialogConfirmButtonTitle
     }
 }

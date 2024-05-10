@@ -208,6 +208,17 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 self.addSubview(moreButton)
             }
             switch item {
+            case .showSpeakerButton:
+                let speakerButtonComponent: ZegoSwitchAudioOutputButton = ZegoSwitchAudioOutputButton()
+//                speakerButtonComponent.delegate = self
+//                speakerButtonComponent.quitConfirmDialogInfo = self.config.confirmDialogInfo ?? ZegoLeaveConfirmDialogInfo()
+//                speakerButtonComponent.iconLeave = ZegoUIKitLiveAudioIconSetType.top_close.load()
+                if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
+                    self.moreButtonList.append(speakerButtonComponent)
+                } else {
+                    self.buttons.append(speakerButtonComponent)
+                    self.addSubview(speakerButtonComponent)
+                }
             case .toggleMicrophoneButton:
                 let micButtonComponent: ZegoToggleMicrophoneButton = ZegoToggleMicrophoneButton()
                 micButtonComponent.userID = ZegoUIKit.shared.localUserInfo?.userID

@@ -9,7 +9,7 @@ import UIKit
 import ZegoUIKit
 
 class ZegoLiveAudioMemberListCell: UITableViewCell {
-    
+  var translationText: ZegoTranslationText?
     var user: ZegoUIKitUser? {
         didSet {
             guard let userName = user?.userName else { return }
@@ -70,19 +70,19 @@ class ZegoLiveAudioMemberListCell: UITableViewCell {
     func setUserIdentity(_ role: ZegoLiveAudioRoomRole) {
         if role == .host {
             if self.user?.userID == ZegoUIKit.shared.localUserInfo?.userID {
-                nameLabel.text = String(format: "%@(You,Host)",self.user?.userName ?? "")
+                nameLabel.text = String(format: "%@%@",self.user?.userName ?? "",self.translationText?.audioMemberListUserIdentifyYourHost ?? "")
             } else {
-                nameLabel.text = String(format: "%@(Host)",self.user?.userName ?? "")
+                nameLabel.text = String(format: "%@%@",self.user?.userName ?? "",self.translationText?.audioMemberListUserIdentifyHost ?? "")
             }
         }  else if role == .speaker {
             if user?.userID == ZegoUIKit.shared.localUserInfo?.userID {
-                nameLabel.text = String(format: "%@(You,Speaker)",self.user?.userName ?? "")
+                nameLabel.text = String(format: "%@%@",self.user?.userName ?? "",self.translationText?.audioMemberListUserIdentifyYourSpeaker ?? "")
             } else {
-                nameLabel.text = String(format: "%@(Speaker)",self.user?.userName ?? "")
+                nameLabel.text = String(format: "%@%@",self.user?.userName ?? "",self.translationText?.audioMemberListUserIdentifySpeaker ?? "")
             }
         } else {
             if user?.userID == ZegoUIKit.shared.localUserInfo?.userID {
-                nameLabel.text = String(format: "%@(You)",self.user?.userName ?? "")
+                nameLabel.text = String(format: "%@%@",self.user?.userName ?? "",self.translationText?.audioMemberListUserIdentifyYou ?? "")
             } else {
                 nameLabel.text = String(format: "%@",self.user?.userName ?? "")
             }

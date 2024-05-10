@@ -44,7 +44,6 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
             self.bottomBar.config = config
         }
     }
-    
     var currentHost: ZegoUIKitUser? {
         didSet {
             self.bottomBar.currentHost = currentHost
@@ -78,6 +77,9 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     ///   - config: Personalized configuration
     @objc public init(_ appID: UInt32, appSign: String, userID: String, userName: String, roomID: String, config: ZegoUIKitPrebuiltLiveAudioRoomConfig) {
         super.init(nibName: nil, bundle: nil)
+        let zegoLanguage: ZegoLanguage = config.languageCode
+        let zegoUIKitLanguage = ZegoUIKitLanguage(rawValue: zegoLanguage.rawValue)!
+        ZegoUIKitTranslationTextConfig.shared.languageCode = zegoUIKitLanguage;
         if (config.role == .host || config.role == .speaker) && config.takeSeatIndexWhenJoining < 0 {
             config.role = .audience
             config.takeSeatIndexWhenJoining = -1
@@ -128,7 +130,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     }()
     
     lazy var bottomBar: ZegoLiveAudioRoomBottomBar = {
-        let bar = ZegoLiveAudioRoomBottomBar()
+        let bar = ZegoLiveAudioRoomBottomBar(frame: CGRectZero)
         bar.controller = self
         bar.config = self.config
         bar.delegate = self.help
@@ -250,6 +252,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     
     func queryInRoomUserAttribute() {
         ZegoUIKit.getSignalingPlugin().queryRoomProperties { data in
+            print("queryInRoomUserAttribute \(String(describing: data))")
             guard let data = data else { return }
             let code: Int = data["code"] as? Int ?? 0
             if code == 0 {
@@ -462,15 +465,15 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
         case .take:
             break
         case .leave:
-            alterTitle = self.config.translationText.leaveSeatDialogInfo.title ?? "Leave the seat"
-            alterMessage = self.config.translationText.leaveSeatDialogInfo.message ?? "Are you sure to leave the seat?"
-            cancelName = self.config.translationText.leaveSeatDialogInfo.cancelButtonName
-            sureName = self.config.translationText.leaveSeatDialogInfo.confirmButtonName
+          alterTitle = self.config.translationText.leaveSeatMenuDialogButton
+          alterMessage = self.config.translationText.leaveSeatDialogInfoMessage
+            cancelName = self.config.translationText.cancelMenuDialogButton
+            sureName = self.config.translationText.leaveRoomDialogConfirmButtonTitle
         case .remove:
-            alterTitle = self.config.translationText.removeSpeakerFromSeatDialogInfo.title ?? ""
-            alterMessage = self.config.translationText.removeSpeakerFromSeatDialogInfo.message?.replacingOccurrences(of: "%@", with: self.currentClickSeatModel?.userName ?? "") ?? ""
-            cancelName = self.config.translationText.removeSpeakerFromSeatDialogInfo.cancelButtonName
-            sureName = self.config.translationText.removeSpeakerFromSeatDialogInfo.confirmButtonName
+            alterTitle = self.config.translationText.removeSpeakerFromSeatDialogInfoTitle
+          alterMessage = self.config.translationText.removeSpeakerFromSeatDialogInfoMessage.replacingOccurrences(of: "%@", with: self.currentClickSeatModel?.userName ?? "")
+            cancelName = self.config.translationText.cancelMenuDialogButton
+            sureName = self.config.translationText.leaveRoomDialogConfirmButtonTitle
         }
         guard let currentClickSeatModel = self.currentClickSeatModel else { return }
         let alterView: UIAlertController = UIAlertController.init(title: alterTitle, message: alterMessage, preferredStyle: .alert)
@@ -501,6 +504,7 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
             guard let data = data else { return }
             if data["code"] as! Int == 0 {
                 self.currentRole = .speaker
+                self.roomProperties.updateValue(self.userID ?? "", forKey: "\(index)")
                 self.updateLayout()
                 ZegoUIKit.shared.turnMicrophoneOn(self.userID ?? "", isOn: true)
                 ZegoUIKit.shared.turnCameraOn(self.userID ?? "", isOn: false)
@@ -513,6 +517,7 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
             guard let data = data else { return }
             if data["code"] as! Int == 0 {
                 self.currentRole = .audience
+                self.roomProperties.removeValue(forKey: "\(index)")
                 self.updateLayout()
                 ZegoUIKit.shared.turnMicrophoneOn(self.userID ?? "", isOn: false)
             }
@@ -647,7 +652,7 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
         guard let _ = liveAudioVC else { return }
         if isLeave {
             ZegoUIKit.getSignalingPlugin().leaveRoom { data in
-                ZegoUIKit.getSignalingPlugin().loginOut()
+//                ZegoUIKit.getSignalingPlugin().loginOut()
             }
             self.liveAudioVC?.dismiss(animated: true)
             self.liveAudioVC?.delegate?.onLeaveLiveAudioRoom?()
@@ -655,11 +660,25 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
     }
     
     func onUsersInRoomAttributesUpdated(_ updateKeys: [String]?, oldAttributes: [ZegoUserInRoomAttributesInfo]?, attributes: [ZegoUserInRoomAttributesInfo]?, editor: ZegoUIKitUser?) {
-        self.liveAudioVC?.usersInRoomAttributes = attributes
+        print("nRoomAttributesUpdated \(String(describing: attributes))")
+        
+        // Update the user's role
+        // the live vc's usersInRoomAttributes only used to set user role.
+        guard let attributes = attributes else { return }
+        for attribute in attributes {
+            if attribute.attributes.keys.contains("role") {
+                let oldAttribute = self.liveAudioVC?.usersInRoomAttributes?.filter({ $0.userID == attribute.userID }).first
+                if oldAttribute == nil {
+                    self.liveAudioVC?.usersInRoomAttributes?.append(attribute)
+                } else {
+                    oldAttribute?.attributes = attribute.attributes
+                }
+            }
+        }
         self.liveAudioVC?.updateLayout()
     }
     
-    func onRoomPropertyUpdated(_ key: String, oldValue: String, newValue: String) {
+    func onSignalPluginRoomPropertyUpdated(_ key: String, oldValue: String, newValue: String) {
         guard let userID = self.liveAudioVC?.userID else { return }
         self.liveAudioVC?.roomProperties.updateValue(newValue, forKey: key)
         if oldValue == userID && newValue == "" {
