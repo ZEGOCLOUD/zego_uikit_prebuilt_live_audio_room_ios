@@ -22,7 +22,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var useSpeakerWhenJoining: Bool = true
     public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
     
-    var translationText: ZegoTranslationText = ZegoTranslationText()
+    public var translationText: ZegoTranslationText = ZegoTranslationText()
     public var layoutConfig: ZegoLiveAudioRoomLayoutConfig = ZegoLiveAudioRoomLayoutConfig()
     public var seatConfig: ZegoLiveAudioRoomSeatConfig = ZegoLiveAudioRoomSeatConfig()
     public var hostSeatIndexes: [Int] = [0]
