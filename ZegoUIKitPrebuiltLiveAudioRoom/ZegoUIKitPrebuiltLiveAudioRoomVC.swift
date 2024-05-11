@@ -77,9 +77,10 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     ///   - config: Personalized configuration
     @objc public init(_ appID: UInt32, appSign: String, userID: String, userName: String, roomID: String, config: ZegoUIKitPrebuiltLiveAudioRoomConfig) {
         super.init(nibName: nil, bundle: nil)
-        let zegoLanguage: ZegoLanguage = config.languageCode
+        let zegoLanguage: ZegoLanguage = config.translationText.getLanguage()
         let zegoUIKitLanguage = ZegoUIKitLanguage(rawValue: zegoLanguage.rawValue)!
-        ZegoUIKitTranslationTextConfig.shared.languageCode = zegoUIKitLanguage;
+        ZegoUIKitTranslationTextConfig.shared.translationText = ZegoUIKitTranslationText(language: zegoUIKitLanguage);
+      
         if (config.role == .host || config.role == .speaker) && config.takeSeatIndexWhenJoining < 0 {
             config.role = .audience
             config.takeSeatIndexWhenJoining = -1

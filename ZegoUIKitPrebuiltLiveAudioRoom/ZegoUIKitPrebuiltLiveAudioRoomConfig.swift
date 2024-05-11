@@ -22,22 +22,13 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var useSpeakerWhenJoining: Bool = true
     public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
     
-    public var translationText: ZegoTranslationText = ZegoTranslationText()
+    public var translationText: ZegoTranslationText = ZegoTranslationText(language: .english)
     public var layoutConfig: ZegoLiveAudioRoomLayoutConfig = ZegoLiveAudioRoomLayoutConfig()
     public var seatConfig: ZegoLiveAudioRoomSeatConfig = ZegoLiveAudioRoomSeatConfig()
     public var hostSeatIndexes: [Int] = [0]
     
     public var userAvatarUrl: String?
     public var userInRoomAttributes:[String : String]?
-    public var languageCode: ZegoLanguage = .english {
-      didSet{
-        if languageCode == .chinese {
-        translationText = ZegoTranslationTextZH()
-        } else {
-        translationText = ZegoTranslationText()
-        }
-      }
-    }
  
     public lazy var confirmDialogInfo: ZegoLeaveConfirmDialogInfo? = {
       let confirmDialogInfo = ZegoLeaveConfirmDialogInfo()
@@ -131,6 +122,7 @@ public class ZegoBottomMenuBarConfig: NSObject {
 
 public class ZegoTranslationText: NSObject {
     
+    var language :ZegoLanguage  = .english
     public var removeSpeakerMenuDialogButton : String = "Remove %@ from seat"
     public var takeSeatMenuDialogButton : String = "Take the seat"
     public var leaveSeatMenuDialogButton : String = "Leave the seat"
@@ -158,12 +150,11 @@ public class ZegoTranslationText: NSObject {
     public var audioMemberListUserIdentifyYourSpeaker : String = "(You,Speaker)"
     public var audioMemberListUserIdentifySpeaker : String = "(Speaker)"
     public var audioMemberListUserIdentifyYou : String = "(You)"
-
-}
-
-public class ZegoTranslationTextZH :ZegoTranslationText {
-    override public init() {
-        super.init()
+  
+    public init(language:ZegoLanguage) {
+      super.init()
+      self.language = language
+      if language == .chinese {
         removeSpeakerMenuDialogButton = "将 %@ 移下麦位"
         takeSeatMenuDialogButton = "上麦"
         leaveSeatMenuDialogButton = "下麦"
@@ -189,9 +180,14 @@ public class ZegoTranslationTextZH :ZegoTranslationText {
         audioMemberListUserIdentifyYourSpeaker = "(我,连麦中)"
         audioMemberListUserIdentifySpeaker = "(连麦中)"
         audioMemberListUserIdentifyYou = "(您)"
+      }
+    }
+
+  
+    public func getLanguage() -> ZegoLanguage {
+      return self.language
     }
 }
-
 
 public class ZegoDialogInfo: NSObject {
   
@@ -199,17 +195,15 @@ public class ZegoDialogInfo: NSObject {
     public var message: String?
     public var cancelButtonName:String?
     public var confirmButtonName:String?
-    public var translationText: ZegoTranslationText = ZegoTranslationText()
+    public var translationText: ZegoTranslationText = ZegoTranslationText(language: .english)
     private override init() {
         super.init()
     }
     
-    public convenience init(_ title: String, message: String, cancelButtonName: String?, confirmButtonName: String?,languageCode: ZegoLanguage) {
+    public convenience init(_ title: String, message: String, cancelButtonName: String?, confirmButtonName: String?,language: ZegoLanguage) {
         self.init()
-        if languageCode == .chinese {
-        translationText = ZegoTranslationTextZH()
-        } else {
-        translationText = ZegoTranslationText()
+        if language == .chinese {
+          translationText = ZegoTranslationText(language: .chinese)
         }
         self.title = title
         self.message = message
