@@ -12,6 +12,9 @@ protocol ZegoLiveAudioRoomBottomBarDelegate: AnyObject {
     func onMenuBarMoreButtonClick(_ buttonList: [UIView])
     func onInRoomMessageButtonClick()
     func onLeaveButtonClick(_ isLeave: Bool)
+    func onDidClickAgree(_ user: ZegoUIKitUser)
+    func onDidClickDisagree(_ user: ZegoUIKitUser)
+    func onDidClickInvite(_ user: ZegoUIKitUser)
 }
 
 extension ZegoLiveAudioRoomBottomBarDelegate {
@@ -21,8 +24,25 @@ extension ZegoLiveAudioRoomBottomBarDelegate {
 }
 
 class ZegoLiveAudioRoomBottomBar: UIView {
-
+    
     var userID: String?
+    public var showRedDot: Bool = false {
+        didSet {
+            if self.lockSeatButton?.isLock == true {
+                self.redDot.isHidden = !showRedDot
+            } else {
+                self.redDot.isHidden = true
+            }
+        }
+    }
+    
+    lazy var redDot: UIView = {
+        let dot = UIView()
+        dot.backgroundColor = UIColor.red
+        dot.isHidden = true
+        return dot
+    }()
+    
     var config: ZegoUIKitPrebuiltLiveAudioRoomConfig = ZegoUIKitPrebuiltLiveAudioRoomConfig.audience() {
         didSet {
             self.messageButton.isHidden = !config.bottomMenuBarConfig.showInRoomMessageButton
@@ -48,16 +68,27 @@ class ZegoLiveAudioRoomBottomBar: UIView {
         }
     }
     
+    var audienceInviteList: [ZegoUIKitUser]? {
+        didSet {
+            for button in self.buttons {
+                if button is ZegoRequestTakeSeatButton {
+                    let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
+                    requestTakeSeatButton.requestList = audienceInviteList
+                }
+            }
+        }
+    }
+    
     weak var delegate: ZegoLiveAudioRoomBottomBarDelegate?
     weak var controller: UIViewController?
     weak var showQuitDialogVC: UIViewController?
-    
+    var memberButton: ZegoMemberButton = ZegoMemberButton()
     private var buttons: [UIView] = []
     private var moreButtonList: [UIView] = []
     private var hostExtendButtons: [UIButton] = []
     private var speakerExtendButtons: [UIButton] = []
     private var audienceExtendButtons: [UIButton] = []
-    
+    var lockSeatButton : ZegoCloseSeatButton?
     var barButtons:[ZegoMenuBarButtonName] = [] {
         didSet {
             self.removeAllButton()
@@ -121,7 +152,7 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 self.moreButtonList.append(lastButton)
                 self.moreButtonList.append(button)
                 self.buttons.insert(moreButton, at: 0)
-    //            self.buttons.replaceSubrange(4...4, with: [moreButton])
+                //            self.buttons.replaceSubrange(4...4, with: [moreButton])
             } else {
                 self.buttons.append(button)
                 self.addSubview(button)
@@ -184,7 +215,17 @@ class ZegoLiveAudioRoomBottomBar: UIView {
         var lastView: UIView?
         for button in self.buttons {
             if index == 0 {
-                button.frame = CGRect.init(x: self.frame.size.width - self.margin - itemSize.width, y: UIkitLiveAudioAdaptLandscapeHeight(10), width: itemSize.width, height: itemSize.height)
+                if let button = button as? ZegoRequestTakeSeatButton {
+                    let text : String = button.isSelected ? config.translationText.cancelRequestCoHostButton : config.translationText.requestCoHostButton
+                    let size = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+                    let options: NSStringDrawingOptions = [.usesLineFragmentOrigin, .usesFontLeading]
+                    let rect = text.boundingRect(with: size, options: options, attributes: [.font: UIFont.systemFont(ofSize: 13, weight: .medium)], context: nil)
+                    let buttonWidth: CGFloat = rect.size.width + 80
+                    button.frame = CGRect.init(x: self.frame.size.width - self.margin - buttonWidth, y: UIkitLiveAudioAdaptLandscapeHeight(10), width: buttonWidth, height: itemSize.height)
+                    
+                } else {
+                    button.frame = CGRect.init(x: self.frame.size.width - self.margin - itemSize.width, y: UIkitLiveAudioAdaptLandscapeHeight(10), width: itemSize.width, height: itemSize.height)
+                }
             } else {
                 if let lastView = lastView {
                     button.frame = CGRect.init(x: lastView.frame.minX - itemSpace - itemSize.width, y: lastView.frame.minY, width: itemSize.width, height: itemSize.height)
@@ -193,6 +234,11 @@ class ZegoLiveAudioRoomBottomBar: UIView {
             lastView = button
             index = index + 1
         }
+        self.addSubview(self.redDot)
+        self.bringSubviewToFront(self.redDot)
+        self.redDot.frame = CGRect(x: self.memberButton.frame.maxX - 12, y: self.memberButton.frame.minY + 6, width: 8, height: 8)
+        self.redDot.layer.masksToBounds = true
+        self.redDot.layer.cornerRadius = 4
     }
     
     private func createButton() {
@@ -208,11 +254,32 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 self.addSubview(moreButton)
             }
             switch item {
+            case .applyTakeSeatButton:
+                let appleButtonComponent: ZegoRequestTakeSeatButton = ZegoRequestTakeSeatButton(frame: CGRectZero, translationText: self.config.translationText)
+                appleButtonComponent.delegate = self
+                appleButtonComponent.layer.masksToBounds = true
+                appleButtonComponent.layer.cornerRadius = 18
+                if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
+                    self.moreButtonList.append(appleButtonComponent)
+                } else {
+                    self.buttons.append(appleButtonComponent)
+                    self.addSubview(appleButtonComponent)
+                }
+            case .closeSeatButton:
+                let closeSeatButtonComponent: ZegoCloseSeatButton = ZegoCloseSeatButton()
+                closeSeatButtonComponent.isLock = self.config.closeSeatsWhenJoin
+                //                speakerButtonComponent.quitConfirmDialogInfo = self.config.confirmDialogInfo ?? ZegoLeaveConfirmDialogInfo()
+                //                speakerButtonComponent.iconLeave = ZegoUIKitLiveAudioIconSetType.top_close.load()
+                self.lockSeatButton = closeSeatButtonComponent;
+                if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
+                    self.moreButtonList.append(closeSeatButtonComponent)
+                } else {
+                    self.buttons.append(closeSeatButtonComponent)
+                    self.addSubview(closeSeatButtonComponent)
+                }
             case .showSpeakerButton:
                 let speakerButtonComponent: ZegoSwitchAudioOutputButton = ZegoSwitchAudioOutputButton()
-//                speakerButtonComponent.delegate = self
-//                speakerButtonComponent.quitConfirmDialogInfo = self.config.confirmDialogInfo ?? ZegoLeaveConfirmDialogInfo()
-//                speakerButtonComponent.iconLeave = ZegoUIKitLiveAudioIconSetType.top_close.load()
+                speakerButtonComponent.useSpeaker = self.config.useSpeakerWhenJoining
                 if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
                     self.moreButtonList.append(speakerButtonComponent)
                 } else {
@@ -242,6 +309,8 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 memberButton.controller = controller
                 memberButton.currentHost = self.currentHost
                 memberButton.config = config
+                memberButton.delegate = self
+                self.memberButton = memberButton
                 if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
                     self.moreButtonList.append(memberButton)
                 } else {
@@ -297,8 +366,42 @@ class ZegoLiveAudioRoomBottomBar: UIView {
         //更多按钮点击事件
         self.delegate?.onMenuBarMoreButtonClick(self.moreButtonList)
     }
-
+    
+    func receiveHostInviteCancelOwnerApply() {
+        for button in self.buttons {
+            if button is ZegoRequestTakeSeatButton {
+                let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
+                if requestTakeSeatButton.isSelected {
+                    requestTakeSeatButton.isSelected = false
+                    //FIXME: 申请和取消申请时间间隔太短会报错
+                    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.8){
+                        self.applyWheatButtonDidClick(sender: requestTakeSeatButton)
+                    }
+                }
+            }
+        }
+    }
+    
+    func hostUnlockSeatCancelOwnerApply() {
+        self.receiveHostInviteCancelOwnerApply()
+    }
+    
+    func cancelOwnerApply() {
+        self.receiveHostInviteCancelOwnerApply()
+    }
+    
+    func resetApplySeatStateNormal() {
+        for button in self.buttons {
+            if button is ZegoRequestTakeSeatButton {
+                let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
+                if requestTakeSeatButton.isSelected {
+                    requestTakeSeatButton.isSelected = false
+                }
+            }
+        }
+    }
 }
+
 
 class ZegoMoreButton: UIButton {
     
@@ -312,7 +415,7 @@ class ZegoMoreButton: UIButton {
     }
 }
 
-extension ZegoLiveAudioRoomBottomBar: ZegoInRoomMessageButtonDelegate, LeaveButtonDelegate {
+extension ZegoLiveAudioRoomBottomBar: ZegoInRoomMessageButtonDelegate, LeaveButtonDelegate,ZegoApplyWheatButtonDelegate,ZegoLiveAudioMemberButtonDelegate {
     func inRoomMessageButtonDidClick() {
         self.delegate?.onInRoomMessageButtonClick()
     }
@@ -324,4 +427,43 @@ extension ZegoLiveAudioRoomBottomBar: ZegoInRoomMessageButtonDelegate, LeaveButt
         self.delegate?.onLeaveButtonClick(isLeave)
     }
     
+    func applyWheatButtonDidClick(sender: ZegoRequestTakeSeatButton) {
+        let idList:Array = [self.currentHost?.userID ?? ""]
+        if ((self.currentHost?.userID) == nil)  {
+            sender.isSelected = !sender.isSelected
+            self.setupLayout()
+            return
+        }
+        self.setupLayout()
+        if sender.isSelected {
+            ZegoUIKit.getSignalingPlugin().sendInvitation(idList, timeout: 60, type: 2, data: nil, notificationConfig: nil) { data in
+                guard let data = data else { return }
+                if data["code"] as! Int != 0 {
+                    sender.isSelected = !sender.isSelected
+                    self.setupLayout()
+                }
+            }
+        } else {
+            ZegoUIKit.getSignalingPlugin().cancelInvitation(idList, data: nil) { data in
+                guard let data = data else { return }
+                if data["code"] as! Int != 0 {
+                    sender.isSelected = !sender.isSelected
+                    self.setupLayout()
+                }
+            }
+        }
+    }
+    
+    //MARK: -ZegoLiveAudioMemberButtonDelegate
+    func memberListDidClickAgree(_ user: ZegoUIKitUser) {
+        self.delegate?.onDidClickAgree(user)
+    }
+    
+    func memberListDidClickDisagree(_ user: ZegoUIKitUser) {
+        self.delegate?.onDidClickDisagree(user)
+    }
+    
+    func memberListDidClickInvite(_ user: ZegoUIKitUser) {
+        self.delegate?.onDidClickInvite(user)
+    }
 }

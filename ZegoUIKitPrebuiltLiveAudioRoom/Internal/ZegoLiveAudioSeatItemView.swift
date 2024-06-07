@@ -47,12 +47,13 @@ class ZegoLiveAudioSeatItemView: UIView {
                 self.audioViewView.delegate = self
             }
             self.audioViewView.isHidden = model.userID.count == 0
+            self.seatImageView.image = model.lock ? ZegoUIKitLiveAudioIconSetType.seat_icon_disabled.load() : ZegoUIKitLiveAudioIconSetType.seat_icon_normal.load()
         }
     }
     
     var seatConfig: ZegoLiveAudioRoomSeatConfig? {
         didSet {
-            self.backgroundColor = seatConfig?.backgroudColor ?? UIColor.clear
+            self.backgroundColor = seatConfig?.backgroundColor ?? UIColor.clear
             if let backgroundImage = seatConfig?.backgroundImage {
                 self.audioViewView.audioViewBackgroudImage = backgroundImage
             }

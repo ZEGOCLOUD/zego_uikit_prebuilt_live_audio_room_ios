@@ -15,8 +15,10 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var takeSeatIndexWhenJoining: Int = -1
     public var turnOnMicrophoneWhenJoining: Bool = false
     public var useSpeakerWhenJoining: Bool = true
-    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
-    
+    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.closeSeatButton,.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
+    // 如果进房时发现房间属性有“lockseat”这个key，则不处理
+    // 主播是否进房时就调用closeSeats方法
+    public var closeSeatsWhenJoin = true
     public var translationText: ZegoTranslationText = ZegoTranslationText(language: .ENGLISH)
     public var layoutConfig: ZegoLiveAudioRoomLayoutConfig = ZegoLiveAudioRoomLayoutConfig()
     public var seatConfig: ZegoLiveAudioRoomSeatConfig = ZegoLiveAudioRoomSeatConfig()
@@ -43,7 +45,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
         config.role = .host
         config.takeSeatIndexWhenJoining = 0
         config.turnOnMicrophoneWhenJoining = true
-        
+        config.closeSeatsWhenJoin = true
 //        let confirmDialogInfo = ZegoLeaveConfirmDialogInfo()
 //        confirmDialogInfo.title = self.translationText.leaveConfirmDialogTitle
 //        confirmDialogInfo.message = self.translationText.leaveConfirmDialogMessage
@@ -61,18 +63,19 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     }
 
 }
-
+@objcMembers
 public class ZegoLiveAudioRoomSeatConfig: NSObject {
-    public var showSoundWaveInAudioMode: Bool = true
-    public var backgroudColor: UIColor?
-    public var backgroundImage: UIImage?
+   public var showSoundWaveInAudioMode: Bool = true
+   public var backgroundColor: UIColor?
+   public var backgroundImage: UIImage?
 }
 
+@objcMembers
 public class ZegoLiveAudioRoomLayoutConfig: NSObject {
-    public var rowConfigs: [ZegoLiveAudioRoomLayoutRowConfig] = []
-    public var rowSpecing: Int = 0
+   public var rowConfigs: [ZegoLiveAudioRoomLayoutRowConfig] = []
+   public var rowSpecing: Int = 0
     
-    public override init() {
+   public override init() {
         super.init()
         let firstConfigs = ZegoLiveAudioRoomLayoutRowConfig()
         firstConfigs.count = 4
@@ -84,37 +87,75 @@ public class ZegoLiveAudioRoomLayoutConfig: NSObject {
     }
 }
 
+@objcMembers
 public class ZegoLiveAudioRoomLayoutRowConfig: NSObject {
     
-    public var count: Int = 0 {
+   public var count: Int = 0 {
         didSet {
             if count > 4 {
                 count = 4
             }
         }
     }
-    public var seatSpacing: Int = 0
-    public var alignment: ZegoLiveAudioRoomLayoutAlignment = .center
+   public var seatSpacing: Int = 0
+   public var alignment: ZegoLiveAudioRoomLayoutAlignment = .center
 }
 
+@objcMembers
 public class ZegoBottomMenuBarConfig: NSObject {
-    
+    public var maxCount: UInt = 5
     public var showInRoomMessageButton: Bool = true
+    //MARK: The following properties are provided solely by Swift
     public var hostButtons: [ZegoMenuBarButtonName] = []
     public var speakerButtons: [ZegoMenuBarButtonName] = []
     public var audienceButtons: [ZegoMenuBarButtonName] = []
     
-    public var maxCount: UInt = 5
-    
+    //MARK: swift func
     public convenience init(hostButtons: [ZegoMenuBarButtonName], speakerButtons: [ZegoMenuBarButtonName], audienceButtons: [ZegoMenuBarButtonName]) {
         self.init()
         self.hostButtons = hostButtons
         self.speakerButtons = speakerButtons
         self.audienceButtons = audienceButtons
     }
+  
+    //MARK: The following properties are provided solely by OC
+    public var hostButtonsOC: NSArray {
+        get {
+            return hostButtons.map { NSNumber(value: $0.rawValue) } as NSArray
+        }
+        set {
+          hostButtons = newValue.compactMap { ZegoMenuBarButtonName(rawValue: ($0 as AnyObject).intValue) }
+        }
+    }
+    
+    public var speakerButtonsOC: NSArray {
+        get {
+            return speakerButtons.map { NSNumber(value: $0.rawValue) } as NSArray
+        }
+        set {
+          speakerButtons = newValue.compactMap { ZegoMenuBarButtonName(rawValue: ($0 as AnyObject).intValue) }
+        }
+    }
+    
+    public var audienceButtonsOC: NSArray {
+        get {
+            return audienceButtons.map { NSNumber(value: $0.rawValue) } as NSArray
+        }
+        set {
+          audienceButtons = newValue.compactMap { ZegoMenuBarButtonName(rawValue: ($0 as AnyObject).intValue) }
+        }
+    }
+  
+    //MARK: OC func
+    public convenience init(hostButtons: NSArray, speakerButtons: NSArray, audienceButtons: NSArray) {
+        self.init()
+        self.hostButtonsOC = hostButtons
+        self.speakerButtonsOC = speakerButtons
+        self.audienceButtonsOC = speakerButtons
+    }
 }
 
-
+@objcMembers
 public class ZegoTranslationText: NSObject {
     
     var language :ZegoUIKitLanguage  = .ENGLISH
@@ -146,7 +187,21 @@ public class ZegoTranslationText: NSObject {
     public var audioMemberListUserIdentifySpeaker : String = "(Speaker)"
     public var audioMemberListUserIdentifyYou : String = "(You)"
   
-    public init(language:ZegoUIKitLanguage) {
+    public var requestCoHostButton: String = "Apply to co-host"
+    public var cancelRequestCoHostButton: String = "Cancel the application"
+  
+    public var receivedCoHostInvitationDialogInfoConfirm: String = "Agree"
+    public var receivedCoHostInvitationDialogInfoCancel: String = "Disagree"
+  
+    public var receivedCoHostInvitationDialogInfoTitle: String = "Invitation"
+    public var receivedCoHostInvitationDialogInfoMessage: String = "The host is inviting you to co-host."
+    public var audienceRejectInvitationToast: String = "refused to be a co-host."
+    public var hostRejectCoHostRequestToast: String = "Your request to co-host with the host has been refused."
+    public var inviteCoHostButton: String = "Invite %@ to co-host"
+    public var repeatInviteCoHostFailedToast:String = "You've sent the co-host invitation, please wait for confirmation."
+    public var inviteCoHostFailedToast: String = "Failed to connect with the co-host，please try again."
+    public var muteSpeakerMicDialogButton: String = "Sound off %@"
+   @objc public init(language:ZegoUIKitLanguage) {
       super.init()
       self.language = language
       if language == .CHS {
@@ -175,6 +230,19 @@ public class ZegoTranslationText: NSObject {
         audioMemberListUserIdentifyYourSpeaker = "(我,连麦中)"
         audioMemberListUserIdentifySpeaker = "(连麦中)"
         audioMemberListUserIdentifyYou = "(您)"
+        requestCoHostButton = "申请连麦"
+        cancelRequestCoHostButton = "取消申请"
+        
+        receivedCoHostInvitationDialogInfoTitle = "邀请"
+        receivedCoHostInvitationDialogInfoMessage = "房主邀请您上麦"
+        receivedCoHostInvitationDialogInfoConfirm = "同意"
+        receivedCoHostInvitationDialogInfoCancel = "不同意"
+        audienceRejectInvitationToast = "拒绝连麦。"
+        hostRejectCoHostRequestToast = "您的连麦申请已被拒绝。"
+        inviteCoHostButton = "邀请 %@ 连麦"
+        repeatInviteCoHostFailedToast = "您已发送连麦邀请，请等待确认。"
+        inviteCoHostFailedToast = "连麦失败，请重试。"
+        muteSpeakerMicDialogButton = "静音 %@"
       }
     }
 
@@ -184,13 +252,14 @@ public class ZegoTranslationText: NSObject {
     }
 }
 
+@objcMembers
 public class ZegoDialogInfo: NSObject {
   
     public var title: String?
     public var message: String?
     public var cancelButtonName:String?
     public var confirmButtonName:String?
-    public var translationText: ZegoTranslationText = ZegoTranslationText(language: .ENGLISH)
+    var translationText: ZegoTranslationText = ZegoTranslationText(language: .ENGLISH)
     private override init() {
         super.init()
     }

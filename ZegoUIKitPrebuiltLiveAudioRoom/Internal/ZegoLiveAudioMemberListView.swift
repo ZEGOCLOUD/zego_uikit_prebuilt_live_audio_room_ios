@@ -8,9 +8,17 @@
 import UIKit
 import ZegoUIKit
 
+protocol ZegoLiveAudioMemberListDelegate: AnyObject {
+    func memberListDidClickMoreButton(_ user: ZegoUIKitUser)
+    func memberListDidClickAgree(_ user: ZegoUIKitUser)
+    func memberListDidClickDisagree(_ user: ZegoUIKitUser)
+}
+
 class ZegoLiveAudioMemberListView: UIView {
     
-    var translationText: ZegoTranslationText?
+    weak var delegate: ZegoLiveAudioMemberListDelegate?
+
+    var translationText: ZegoTranslationText = ZegoTranslationText(language: .ENGLISH)
     
     var currentHost: ZegoUIKitUser? {
         didSet {
@@ -18,6 +26,18 @@ class ZegoLiveAudioMemberListView: UIView {
         }
     }
     
+    var requestCoHostList: [ZegoUIKitUser]? {
+        didSet {
+            self.reloadMemberList()
+        }
+    }
+  
+    var seatLock:Bool = true {
+        didSet {
+            self.reloadMemberList()
+        }
+    }
+  
     var config: ZegoUIKitPrebuiltLiveAudioRoomConfig?
     
     lazy var memberListView: ZegoMemberList = {
@@ -52,20 +72,36 @@ class ZegoLiveAudioMemberListView: UIView {
     func reloadMemberList() {
         self.memberListView.reloadData()
     }
+  
+    func isRequestCoHost(_ userInfo: ZegoUIKitUser) -> Bool {
+        var isRequestCoHost: Bool = false
+        guard let requestCoHostList = requestCoHostList else {
+            return isRequestCoHost
+        }
+        for user in requestCoHostList {
+            if userInfo.userID == user.userID && userInfo.userID != self.currentHost?.userID {
+                isRequestCoHost = true
+                break
+            }
+        }
+        return isRequestCoHost
+    }
+    
 }
 
-extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
+extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate,ZegoLiveAudioMemberListCellDelegate {
     
     //MARK: -ZegoMemberListDelegate
     
     func getMemberListItemView(_ tableView: UITableView, indexPath: IndexPath, userInfo: ZegoUIKitUser) -> UITableViewCell? {
         let cell: ZegoLiveAudioMemberListCell = tableView.dequeueReusableCell(withIdentifier: "ZegoLiveAudioMemberListCell") as! ZegoLiveAudioMemberListCell
         cell.selectionStyle = .none
+        cell.translationText = self.translationText
+        cell.delegate = self
         cell.user = userInfo
         cell.currentHost = self.currentHost
         cell.backgroundColor = UIColor.clear
-        cell.translationText = self.translationText
-      
+        cell.seatLock = self.seatLock
         if userInfo.userID == self.currentHost?.userID {
             cell.role = .host
         } else if let userID = userInfo.userID, userInfo.inRoomAttributes.values.contains(userID) {
@@ -73,7 +109,7 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
         } else {
             cell.role = .audience
         }
-            
+        cell.isRequestCoHost = self.isRequestCoHost(userInfo)
         return cell
     }
     
@@ -81,13 +117,13 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
         return 70
     }
   
-    func getMemberListviewForHeaderInSection(_ tableView: UITableView, section: Int) -> UIView? {
+    func getMemberListViewForHeaderInSection(_ tableView: UITableView, section: Int) -> UIView? {
         let view = UIView()
         let label = UILabel()
         label.frame = CGRect(x: 16, y: 26, width: 150, height: 22)
         label.textColor = UIColor.white
         label.font = UIFont.systemFont(ofSize: 16)
-        label.text = String(format: "%@·%d", self.translationText?.memberListTitle ?? "Audience",(ZegoUIKit.shared.userList.count))
+        label.text = String(format: "%@·%d", self.translationText.memberListTitle,(ZegoUIKit.shared.userList.count))
         view.addSubview(label)
         return view
     }
@@ -100,7 +136,7 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
         var newUserList: [ZegoUIKitUser] = []
         var host: ZegoUIKitUser?
         var mySelf: ZegoUIKitUser?
-        var speckerUserList: [ZegoUIKitUser] = []
+        var speakerUserList: [ZegoUIKitUser] = []
         var audienceUserList: [ZegoUIKitUser] = []
         let roomProperties = ZegoUIKit.getSignalingPlugin().getRoomProperties()
         for user in userList {
@@ -125,7 +161,7 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
                 mySelf = user
             } else {
                 if let userID = user.userID, let roomProperties = roomProperties,  roomProperties.values.contains(userID) {
-                    speckerUserList.append(user)
+                    speakerUserList.append(user)
                 } else {
                     audienceUserList.append(user)
                 }
@@ -139,9 +175,37 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate {
                 newUserList.append(mySelf)
             }
         }
-        newUserList.append(contentsOf: speckerUserList)
+        newUserList.append(contentsOf: speakerUserList)
         newUserList.append(contentsOf: audienceUserList)
         return newUserList
     }
 
+    //MARK: ZegoLiveAudioMemberListCellDelegate
+    func moreButtonDidClick(_ user: ZegoUIKitUser) {
+        self.delegate?.memberListDidClickMoreButton(user)
+        self.removeFromSuperview()
+    }
+    
+    func agreeButtonDidClick(_ user: ZegoUIKitUser) {
+        guard let userID = user.userID else { return }
+        ZegoUIKit.getSignalingPlugin().acceptInvitation(userID, data: nil, callback: nil)
+        self.requestCoHostList = self.requestCoHostList?.filter{
+            return $0.userID != user.userID
+        }
+        self.memberListView.tableView.reloadData()
+        self.delegate?.memberListDidClickAgree(user)
+        self.removeFromSuperview()
+    }
+    
+    func disAgreeButtonDidClick(_ user: ZegoUIKitUser) {
+        guard let userID = user.userID else { return }
+        ZegoUIKit.getSignalingPlugin().refuseInvitation(userID, data: nil)
+        self.requestCoHostList = self.requestCoHostList?.filter{
+            return $0.userID != user.userID
+        }
+        self.memberListView.tableView.reloadData()
+        self.delegate?.memberListDidClickDisagree(user)
+        self.removeFromSuperview()
+        
+    }
 }

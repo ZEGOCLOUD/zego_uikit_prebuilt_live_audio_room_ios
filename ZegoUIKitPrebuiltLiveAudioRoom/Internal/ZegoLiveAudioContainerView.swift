@@ -43,7 +43,7 @@ class ZegoSeatRowView: UIView, ZegoLiveAudioSeatItemViewDelegate {
             self.clearAllItemView()
             for seatModel in seatRowModel.seatModels {
                 let itemView: ZegoLiveAudioSeatItemView = ZegoLiveAudioSeatItemView()
-                itemView.backgroundColor = self.seatConfig?.backgroudColor ?? UIColor.clear
+                itemView.backgroundColor = self.seatConfig?.backgroundColor ?? UIColor.clear
                 itemView.currSeatModel = seatModel
                 itemView.delegate = self
                 self.seatItemList.append(itemView)
@@ -158,6 +158,16 @@ class ZegoSeatRowView: UIView, ZegoLiveAudioSeatItemViewDelegate {
         }
         self.updateSeat()
     }
+  
+    func setSeatLockToSeatItemView(_ lock: Bool) {
+        guard let seatRowModel = seatRowModel else {
+            return
+        }
+        for seatModel in seatRowModel.seatModels {
+            seatModel.lock = lock
+        }
+        self.updateSeat()
+    }
     
     func updateSeat() {
         guard let seatRowModel = seatRowModel else {
@@ -258,6 +268,11 @@ class ZegoLiveAudioContainerView: UIView {
             view.setLayoutSeatToAudioVideoView(value, index: index)
         }
     }
+    func setSeatLockToSeatItemView(_ lock: Bool) {
+      for view in self.seatRowViewList {
+          view.setSeatLockToSeatItemView(lock)
+      }
+    }
 }
 
 extension ZegoLiveAudioContainerView: ZegoSeatRowViewDelegate {
@@ -272,7 +287,7 @@ extension ZegoLiveAudioContainerView: ZegoSeatRowViewDelegate {
             seatRowModel.seatSpacing = rowConfig.seatSpacing
             let count: Int = rowConfig.count
             for _ in (0..<count) {
-                let seatModel: ZegoLiveAudioSeatModel = ZegoLiveAudioSeatModel.init(index: seatIndex, userID: "", userName: "", extras: "")
+                let seatModel: ZegoLiveAudioSeatModel = ZegoLiveAudioSeatModel.init(index: seatIndex, userID: "", userName: "", extras: "",lock: false)
                 seatIndex = seatIndex + 1
                 seatRowModel.seatModels.append(seatModel)
             }

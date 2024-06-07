@@ -38,13 +38,15 @@ enum ZegoUIKitLiveAudioIconSetType: String, Hashable {
     case bottom_mic_off
     case seat_host_icon
     case seat_icon_normal
+    case seat_icon_disabled
     case icon_more
     case icon_more_light
     case top_close
     case icon_nav_flip
     case icon_comeback
     case close_mic
-    
+    case bottombar_lianmai
+    case member_more
     // MARK: - Image handling
     func load() -> UIImage {
         let image = UIImage.resource.loadImage(name: self.rawValue, bundleName: "ZegoUIKitPrebuiltLiveAudioRoom") ?? UIImage()
@@ -73,4 +75,6 @@ enum ZegoUIKitLiveAudioIconSetType: String, Hashable {
     case toggleMicrophoneButton
     case showMemberListButton
     case showSpeakerButton
+    case closeSeatButton
+    case applyTakeSeatButton
 }

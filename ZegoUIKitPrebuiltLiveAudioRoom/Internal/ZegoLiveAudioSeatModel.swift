@@ -13,11 +13,12 @@ class ZegoLiveAudioSeatModel: NSObject {
     var userID: String
     var userName: String
     var extras: String
-    
-    init(index: Int, userID: String, userName: String, extras: String) {
+    var lock:Bool
+    init(index: Int, userID: String, userName: String, extras: String, lock:Bool) {
         self.index = index
         self.userID = userID
         self.userName = userName
         self.extras = extras
+        self.lock = lock
     }
 }
