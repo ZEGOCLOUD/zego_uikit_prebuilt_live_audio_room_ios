@@ -74,6 +74,7 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 if button is ZegoRequestTakeSeatButton {
                     let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
                     requestTakeSeatButton.requestList = audienceInviteList
+                    break
                 }
             }
         }
@@ -377,6 +378,7 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                     DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.8){
                         self.applyWheatButtonDidClick(sender: requestTakeSeatButton)
                     }
+                    break
                 }
             }
         }
@@ -396,6 +398,66 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                 let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
                 if requestTakeSeatButton.isSelected {
                     requestTakeSeatButton.isSelected = false
+                }
+                break
+            }
+        }
+    }
+    
+    func applyToTakeSeat(callback: ((_ errorCode: Int,_ errorMsg: String) -> Void)?) {
+        for button in self.buttons {
+            if button is ZegoRequestTakeSeatButton {
+                let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
+                if requestTakeSeatButton.isSelected {
+                    callback?(-1,"Have applied, please wait")
+                } else {
+                    requestTakeSeatButton.isSelected = true
+                    self.applyOrCancelSeat(sender: requestTakeSeatButton) { errorCode, errorMsg in
+                        callback?(errorCode,errorMsg)
+                    }
+                }
+                break
+            }
+        }
+    }
+    
+    func cancelSeatTakingRequest() {
+        for button in self.buttons {
+            if button is ZegoRequestTakeSeatButton {
+                let requestTakeSeatButton = button as! ZegoRequestTakeSeatButton
+                if requestTakeSeatButton.isSelected {
+                    requestTakeSeatButton.isSelected = false
+                    self.applyOrCancelSeat(sender: requestTakeSeatButton) { errorCode, errorMsg in
+                        
+                    }
+                    break
+                }
+            }
+        }
+    }
+    
+    func applyOrCancelSeat(sender: ZegoRequestTakeSeatButton,callback: ((_ errorCode: Int,_ errorMsg: String) -> Void)?) {
+        let idList:Array = [self.currentHost?.userID ?? ""]
+        if ((self.currentHost?.userID) == nil)  {
+            sender.isSelected = !sender.isSelected
+            self.setupLayout()
+            return
+        }
+        self.setupLayout()
+        if sender.isSelected {
+            ZegoUIKit.getSignalingPlugin().sendInvitation(idList, timeout: 60, type: 2, data: nil, notificationConfig: nil) { data in
+                guard let data = data else { return }
+                if data["code"] as! Int != 0 {
+                    sender.isSelected = !sender.isSelected
+                    self.setupLayout()
+                }
+            }
+        } else {
+            ZegoUIKit.getSignalingPlugin().cancelInvitation(idList, data: nil) { data in
+                guard let data = data else { return }
+                if data["code"] as! Int != 0 {
+                    sender.isSelected = !sender.isSelected
+                    self.setupLayout()
                 }
             }
         }
@@ -428,29 +490,8 @@ extension ZegoLiveAudioRoomBottomBar: ZegoInRoomMessageButtonDelegate, LeaveButt
     }
     
     func applyWheatButtonDidClick(sender: ZegoRequestTakeSeatButton) {
-        let idList:Array = [self.currentHost?.userID ?? ""]
-        if ((self.currentHost?.userID) == nil)  {
-            sender.isSelected = !sender.isSelected
-            self.setupLayout()
-            return
-        }
-        self.setupLayout()
-        if sender.isSelected {
-            ZegoUIKit.getSignalingPlugin().sendInvitation(idList, timeout: 60, type: 2, data: nil, notificationConfig: nil) { data in
-                guard let data = data else { return }
-                if data["code"] as! Int != 0 {
-                    sender.isSelected = !sender.isSelected
-                    self.setupLayout()
-                }
-            }
-        } else {
-            ZegoUIKit.getSignalingPlugin().cancelInvitation(idList, data: nil) { data in
-                guard let data = data else { return }
-                if data["code"] as! Int != 0 {
-                    sender.isSelected = !sender.isSelected
-                    self.setupLayout()
-                }
-            }
+        self.applyOrCancelSeat(sender: sender) { errorCode, errorMsg in
+            
         }
     }
     

@@ -165,6 +165,14 @@ class ZegoMemberButton_Help: NSObject, ZegoUIKitEventHandle,ZegoLiveAudioMemberL
     }
     
     func memberListDidClickMoreButton(_ user: ZegoUIKitUser) {
+        let delegate = self.memberButton?.config?.bottomMenuBarConfig.memberListConfig?.memberListMoreButtonPressedDelegate
+        if delegate != nil {
+          if delegate!.responds(to: #selector(ZegoMemberListMoreButtonPressedDelegate.onMemberListMoreButtonPressed(user:))) {
+            delegate!.perform(#selector(ZegoMemberListMoreButtonPressedDelegate.onMemberListMoreButtonPressed(user:)), with: user)
+            return
+          }
+        }
+        
         memberButton?.currentUser = user
         guard let memberButton = memberButton,
               let controller = memberButton.controller

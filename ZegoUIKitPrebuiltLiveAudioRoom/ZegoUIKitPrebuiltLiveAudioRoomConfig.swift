@@ -63,11 +63,19 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     }
 
 }
+
+@objcMembers
+public class ZegoInRoomMessageViewConfig: NSObject {
+  public var inRoomMessageViewVisible: Bool = true
+  public weak var roomMessageDelegate: ZegoInRoomMessageCustomerItemDelegate?
+}
+
 @objcMembers
 public class ZegoLiveAudioRoomSeatConfig: NSObject {
    public var showSoundWaveInAudioMode: Bool = true
    public var backgroundColor: UIColor?
    public var backgroundImage: UIImage?
+   public weak var seatClickedDelegate: ZegoSeatClickedDelegate?
 }
 
 @objcMembers
@@ -109,7 +117,7 @@ public class ZegoBottomMenuBarConfig: NSObject {
     public var hostButtons: [ZegoMenuBarButtonName] = []
     public var speakerButtons: [ZegoMenuBarButtonName] = []
     public var audienceButtons: [ZegoMenuBarButtonName] = []
-    
+    public var memberListConfig: ZegoMemberListConfig?
     //MARK: swift func
     public convenience init(hostButtons: [ZegoMenuBarButtonName], speakerButtons: [ZegoMenuBarButtonName], audienceButtons: [ZegoMenuBarButtonName]) {
         self.init()
@@ -153,6 +161,11 @@ public class ZegoBottomMenuBarConfig: NSObject {
         self.speakerButtonsOC = speakerButtons
         self.audienceButtonsOC = speakerButtons
     }
+}
+
+@objcMembers
+public class ZegoMemberListConfig: NSObject {
+   public weak var memberListMoreButtonPressedDelegate:ZegoMemberListMoreButtonPressedDelegate?
 }
 
 @objcMembers
