@@ -307,7 +307,9 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
               let userID = self.userID,
               let userName = self.userName
         else { return }
-        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID)
+        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID) { errorCode in
+            
+        }
         if self.config.turnOnMicrophoneWhenJoining {
             self.requestMicPermission(true)
         }
