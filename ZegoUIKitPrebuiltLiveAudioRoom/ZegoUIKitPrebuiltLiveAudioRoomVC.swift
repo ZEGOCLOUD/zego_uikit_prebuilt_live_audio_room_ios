@@ -307,7 +307,9 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
               let userID = self.userID,
               let userName = self.userName
         else { return }
-        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID)
+        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID) { errorCode in
+            
+        }
         if self.config.turnOnMicrophoneWhenJoining {
             self.requestMicPermission(true)
         }
@@ -461,24 +463,24 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         print("===ZegoUIKitPrebuiltLiveAudioVC deinit")
     }
     
-    @objc public func setSeatTakingRequestAudienceObserve(_ observe:AnyObject) {
-        self.seatTakingRequestAudienceDelegate = observe as? any ZegoSeatTakingRequestAudienceDelegate
+    @objc public func setSeatTakingRequestAudienceObserve(_ observe:ZegoSeatTakingRequestAudienceDelegate) {
+        self.seatTakingRequestAudienceDelegate = observe
     }
     
-    @objc public func setSeatTakingRequestHostObserve(_ observe:AnyObject) {
-        self.seatTakingRequestHostDelegate = observe as? any ZegoSeatTakingRequestHostDelegate
+    @objc public func setSeatTakingRequestHostObserve(_ observe:ZegoSeatTakingRequestHostDelegate) {
+        self.seatTakingRequestHostDelegate = observe
     }
     
-    @objc public func setUserCountOrPropertyChangedObserve(_ observe:AnyObject) {
-        self.userCountOrPropertyChangedDelegate = observe as? any ZegoUserCountOrPropertyChangedDelegate
+    @objc public func setUserCountOrPropertyChangedObserve(_ observe:ZegoUserCountOrPropertyChangedDelegate) {
+        self.userCountOrPropertyChangedDelegate = observe
     }
     
-    @objc public func setSeatChangedObserve(_ observe:AnyObject) {
-        self.seatChangedDelegate = observe as? any ZegoSeatChangedDelegate
+    @objc public func setSeatChangedObserve(_ observe:ZegoSeatChangedDelegate) {
+        self.seatChangedDelegate = observe
     }
     
-    @objc public func setSeatsLockedObserve(_ observe:AnyObject) {
-        self.seatsLockedDelegate = observe as? any ZegoSeatsLockedDelegate
+    @objc public func setSeatsLockedObserve(_ observe:ZegoSeatsLockedDelegate) {
+        self.seatsLockedDelegate = observe
     }
 }
 

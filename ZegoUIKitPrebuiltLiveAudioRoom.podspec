@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "ZegoUIKitPrebuiltLiveAudioRoom"
-  spec.version      = "2.5.0"
+  spec.version      = "2.5.1"
   spec.summary      = "ZegoUIKitPrebuiltLiveAudioRoom iOS SDK."
 
   # This description is used to generate tags and improve search results.
@@ -131,7 +131,7 @@ Pod::Spec.new do |spec|
   }
 
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
-  spec.dependency 'ZegoUIKit', '>=2.11.6'
-  spec.dependency 'ZegoUIKitSignalingPlugin', '2.5.0'
+  spec.dependency 'ZegoUIKit', '>=2.12.0'
+  spec.dependency 'ZegoUIKitSignalingPlugin', '>=2.5.2'
 
 end

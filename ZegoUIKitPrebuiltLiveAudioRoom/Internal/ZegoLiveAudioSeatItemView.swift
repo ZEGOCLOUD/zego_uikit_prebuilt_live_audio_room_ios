@@ -55,7 +55,7 @@ class ZegoLiveAudioSeatItemView: UIView {
         didSet {
             self.backgroundColor = seatConfig?.backgroundColor ?? UIColor.clear
             if let backgroundImage = seatConfig?.backgroundImage {
-                self.audioViewView.audioViewBackgroudImage = backgroundImage
+                self.audioViewView.audioViewBackgroundImage = backgroundImage
             }
             self.audioViewView.showVoiceWave = seatConfig?.showSoundWaveInAudioMode ?? true
         }
