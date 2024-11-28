@@ -289,13 +289,13 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         self.backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height)
         self.leaveButton.frame = CGRect(x: self.view.frame.size.width - 34 - 15, y: 57, width: 34, height: 34)
         self.setContainerFrame()
-        self.messageView.frame = CGRect(x: 0, y: self.view.frame.size.height - 62 - 200, width: UIkitLiveAudioScreenWidth - 16 - 89, height: 200)
+        self.messageView.frame = CGRect(x: 0, y: self.view.frame.size.height - 62 - 200, width: UIKitLiveAudioScreenWidth - 16 - 89, height: 200)
         self.bottomBar.frame = CGRect(x: 0, y: self.view.frame.size.height - 62, width: self.view.frame.size.width, height: 62)
         
     }
     
     func setContainerFrame() {
-        var height: Int = self.config.layoutConfig.rowConfigs.count * Int(UIkitLiveAudioSeatHeight)
+        var height: Int = self.config.layoutConfig.rowConfigs.count * Int(UIKitLiveAudioSeatHeight)
         let space: Int = self.config.layoutConfig.rowSpecing * (self.config.layoutConfig.rowConfigs.count - 1)
         height = height + space
         self.containerView.frame = CGRect(x: 15, y: Int(self.leaveButton.frame.maxY) + 36, width: Int(UIScreen.main.bounds.size.width) - 30, height: height)
@@ -1342,6 +1342,9 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
             for rowConfig in rowConfigs {
                 allSeats  = allSeats + rowConfig.count
             }
+        }
+        guard allSeats > 1 else {
+            return
         }
         for seatNumber in 0...(allSeats - 1) {
             if self.liveAudioVC?.roomProperties["\(seatNumber)"] == nil {

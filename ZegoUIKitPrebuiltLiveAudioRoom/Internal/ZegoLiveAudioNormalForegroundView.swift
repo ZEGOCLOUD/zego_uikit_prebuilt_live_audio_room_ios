@@ -67,8 +67,8 @@ class ZegoLiveAudioNormalForegroundView: ZegoBaseAudioVideoForegroundView {
     func setupLayOut() {
         let  height: CGFloat = 12
         let  width: CGFloat = self.frame.width - 2*18
-        let x: CGFloat = (self.frame.size.width - UIkitLiveAudioSeatWidth) * 0.5
-        self.foregroundImageView.frame = CGRect(x: x, y: (self.frame.size.height - UIkitLiveAudioSeatHeight) * 0.5, width: 54.0, height: 54.0)
+        let x: CGFloat = (self.frame.size.width - UIKitLiveAudioSeatWidth) * 0.5
+        self.foregroundImageView.frame = CGRect(x: x, y: (self.frame.size.height - UIKitLiveAudioSeatHeight) * 0.5, width: 54.0, height: 54.0)
         self.hostIcon.frame = CGRect(x: 18, y: foregroundImageView.frame.maxY -  height + 2 , width: width, height: height)
         self.userNameLabel.sizeToFit()
         self.userNameLabel.frame = CGRect(x: 5, y: self.hostIcon.frame.maxY + 2, width: self.frame.size.width - 10, height: self.userNameLabel.bounds.height)

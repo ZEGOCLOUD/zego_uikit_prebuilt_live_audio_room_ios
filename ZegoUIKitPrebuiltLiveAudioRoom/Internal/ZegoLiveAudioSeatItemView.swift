@@ -78,16 +78,16 @@ class ZegoLiveAudioSeatItemView: UIView {
     }
     
     func setupLayOut() {
-        self.seatButton.frame = CGRect(x: 0, y: 0, width: UIkitLiveAudioSeatHeight, height: UIkitLiveAudioSeatHeight)
-        self.audioViewView.avatarSize = CGSize(width: UIkitLiveAudioSeatWidth, height: UIkitLiveAudioSeatWidth)
-        self.audioViewView.frame = CGRect(x: 0, y: 0, width: UIkitLiveAudioSeatHeight, height: UIkitLiveAudioSeatHeight)
-        let x: CGFloat = (self.frame.size.width - CGFloat(UIkitLiveAudioSeatWidth)) * 0.5
+        self.seatButton.frame = CGRect(x: 0, y: 0, width: UIKitLiveAudioSeatHeight, height: UIKitLiveAudioSeatHeight)
+        self.audioViewView.avatarSize = CGSize(width: UIKitLiveAudioSeatWidth, height: UIKitLiveAudioSeatWidth)
+        self.audioViewView.frame = CGRect(x: 0, y: 0, width: UIKitLiveAudioSeatHeight, height: UIKitLiveAudioSeatHeight)
+        let x: CGFloat = (self.frame.size.width - CGFloat(UIKitLiveAudioSeatWidth)) * 0.5
         self.seatImageView.frame = CGRect(x: x, y: 0, width: 54.0, height: 54.0)
     }
     
     lazy var seatButton: UIButton = {
         let btn = UIButton(type: .custom)
-        btn.layer.cornerRadius = CGFloat(UIkitLiveAudioSeatWidth / 2)
+        btn.layer.cornerRadius = CGFloat(UIKitLiveAudioSeatWidth / 2)
         btn.layer.masksToBounds = true
         btn.addTarget(self, action: #selector(seatClickAction(_:)), for: .touchUpInside)
         return btn
@@ -95,7 +95,7 @@ class ZegoLiveAudioSeatItemView: UIView {
     
     lazy var seatImageView: UIImageView = {
         let image = UIImageView.init(image: ZegoUIKitLiveAudioIconSetType.seat_icon_normal.load())
-        image.layer.cornerRadius = CGFloat(UIkitLiveAudioSeatWidth / 2)
+        image.layer.cornerRadius = CGFloat(UIKitLiveAudioSeatWidth / 2)
         image.layer.masksToBounds = true
         return image
     }()

@@ -91,8 +91,8 @@ class ZegoSeatRowView: UIView, ZegoLiveAudioSeatItemViewDelegate {
         guard let seatRowModel = seatRowModel else {
             return
         }
-        let itemWidth: CGFloat = CGFloat(UIkitLiveAudioSeatHeight)
-        let itemHeight: CGFloat = CGFloat(UIkitLiveAudioSeatHeight)
+        let itemWidth: CGFloat = CGFloat(UIKitLiveAudioSeatHeight)
+        let itemHeight: CGFloat = CGFloat(UIKitLiveAudioSeatHeight)
         var startX: CGFloat = 0
         var maxSpace: CGFloat = 0
         if seatRowModel.seatModels.count <= 1 {
@@ -237,7 +237,7 @@ class ZegoLiveAudioContainerView: UIView {
     }
     
     lazy var seatItem: ZegoLiveAudioSeatItemView = {
-        let seatItem = ZegoLiveAudioSeatItemView(frame: CGRect(x: 0, y: 0, width: UIkitLiveAudioSeatWidth, height: UIkitLiveAudioSeatHeight))
+        let seatItem = ZegoLiveAudioSeatItemView(frame: CGRect(x: 0, y: 0, width: UIKitLiveAudioSeatWidth, height: UIKitLiveAudioSeatHeight))
         return seatItem
     }()
     

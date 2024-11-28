@@ -9,19 +9,19 @@ import Foundation
 import UIKit
 
 //MARK: -Internal
-let UIkitLiveAudioScreenHeight = UIScreen.main.bounds.size.height
-let UIkitLiveAudioScreenWidth = UIScreen.main.bounds.size.width
-let UIkitLiveAudioBottomSafeAreaHeight = UIApplication.key?.safeAreaInsets.bottom ?? 0
+let UIKitLiveAudioScreenHeight = UIScreen.main.bounds.size.height
+let UIKitLiveAudioScreenWidth = UIScreen.main.bounds.size.width
+let UIKitLiveAudioBottomSafeAreaHeight = UIApplication.key?.safeAreaInsets.bottom ?? 0
 
-let UIkitLiveAudioSeatWidth: CGFloat = 54.0
-let UIkitLiveAudioSeatHeight: CGFloat = 75.0
+let UIKitLiveAudioSeatWidth: CGFloat = 54.0
+let UIKitLiveAudioSeatHeight: CGFloat = 75.0
 
 func UIkitLiveAudioAdaptLandscapeWidth(_ x: CGFloat) -> CGFloat {
-    return x * (UIkitLiveAudioScreenWidth / 375.0)
+    return x * (UIKitLiveAudioScreenWidth / 375.0)
 }
 
 func UIkitLiveAudioAdaptLandscapeHeight(_ x: CGFloat) -> CGFloat {
-    return x * (UIkitLiveAudioScreenHeight / 818.0)
+    return x * (UIKitLiveAudioScreenHeight / 818.0)
 }
 
 func KeyWindow() -> UIWindow {
