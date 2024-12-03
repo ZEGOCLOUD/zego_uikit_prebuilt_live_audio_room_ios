@@ -96,6 +96,7 @@ class ZegoLiveAudioMemberListCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = UIColor.white
+        label.lineBreakMode = .byTruncatingMiddle
         return label
     }()
 
