@@ -2,7 +2,7 @@
 //  ZegoApplyWheatButton.swift
 //  ZegoUIKitPrebuiltLiveAudioRoom
 //
-//  Created by zegomjf on 2024/5/17.
+//  Created by zego on 2024/5/17.
 //
 
 import UIKit
@@ -22,6 +22,7 @@ class ZegoRequestTakeSeatButton: UIView {
       }
   }
   
+  internal var buttonEnable = true
   var requestList: [ZegoUIKitUser]?
   
   lazy var isSelected: Bool = false {
@@ -53,6 +54,7 @@ class ZegoRequestTakeSeatButton: UIView {
       self.config.translationText = translationText
     }
     self.addSubview(self.applyWheatButton)
+    self.buttonEnable = true
   }
   
   required init?(coder: NSCoder) {
@@ -65,8 +67,18 @@ class ZegoRequestTakeSeatButton: UIView {
   }
   
   @objc func onApplyWheatButtonClick() {
-    self.isSelected = !self.isSelected
-    self.delegate?.applyWheatButtonDidClick(sender: self)
+      print("onApplyWheatButtonClick:\(self.buttonEnable)")
+      if self.buttonEnable == false {
+          ZegoLiveAudioTipView.showWarn(self.config.translationText.tryAgainToastString, onView: nil)
+          return
+      }
+      self.buttonEnable = false
+      self.isSelected = !self.isSelected
+      self.delegate?.applyWheatButtonDidClick(sender: self)
+      let workItem = DispatchWorkItem {
+          self.buttonEnable = true
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: workItem)
   }
 }
 

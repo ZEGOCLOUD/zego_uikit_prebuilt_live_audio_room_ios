@@ -42,8 +42,16 @@ class ZegoLiveAudioNormalForegroundView: ZegoBaseAudioVideoForegroundView {
                 return
             }
             self.userNameLabel.text = userInfo.userName
-            self.foregroundImageView.isHidden = ZegoUIKit.shared.isMicrophoneOn(userInfo.userID ?? "")
-            self.setupLayOut()
+            // 异步执行耗时操作
+            DispatchQueue.global(qos: .default).async {
+                let micOn = ZegoUIKit.shared.isMicrophoneOn(userInfo.userID ?? "")
+                DispatchQueue.main.async {
+                    if self.foregroundImageView.isHidden != micOn {
+                        self.foregroundImageView.isHidden = micOn
+                    }
+                    self.setupLayOut()
+                }
+            }
         }
     }
     
@@ -79,4 +87,5 @@ class ZegoLiveAudioNormalForegroundView: ZegoBaseAudioVideoForegroundView {
             self.foregroundImageView.isHidden = isOn
         }
     }
+
 }

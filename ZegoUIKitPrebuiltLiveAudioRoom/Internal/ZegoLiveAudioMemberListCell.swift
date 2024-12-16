@@ -123,7 +123,7 @@ class ZegoLiveAudioMemberListCell: UITableViewCell {
         self.headLabel.layer.masksToBounds = true
         self.headLabel.layer.cornerRadius = 23
         self.nameLabel.frame = CGRect(x: headLabel.frame.maxX + 12, y: 23.5, width: 200, height: 20)
-      
+
         self.moreButton.frame = CGRect(x: self.frame.size.width - 30 - 18, y: 20, width: 30, height: 30)
         self.agreeButton.frame = CGRect(x: self.frame.size.width -  63 - 18, y: 19, width: 63, height: 32)
         self.disAgreeButton.frame = CGRect(x: self.agreeButton.frame.minX - 6 - 82, y: 19, width: 82, height: 32)
@@ -131,6 +131,11 @@ class ZegoLiveAudioMemberListCell: UITableViewCell {
         self.agreeButton.layer.cornerRadius = 16
         self.disAgreeButton.layer.masksToBounds = true
         self.disAgreeButton.layer.cornerRadius = 16
+        
+        if self.agreeButton.isHidden == false {
+            var maxWidth:CGFloat =  self.disAgreeButton.frame.origin.x - (headLabel.frame.maxX + 12) - 20
+            self.nameLabel.frame = CGRect(x: headLabel.frame.maxX + 12, y: 23.5, width: maxWidth, height: 20)
+        }
     }
     
     func setUserIdentity(_ role: ZegoLiveAudioRoomRole) {
@@ -171,7 +176,7 @@ class ZegoLiveAudioMemberListCell: UITableViewCell {
                 self.disAgreeButton.isHidden = true
             } else if isCoHost {
 //                self.moreButton.isHidden = enableCoHosting ? false : true
-                self.moreButton.isHidden = false
+                self.moreButton.isHidden = true
                 self.agreeButton.isHidden = true
                 self.disAgreeButton.isHidden = true
                 

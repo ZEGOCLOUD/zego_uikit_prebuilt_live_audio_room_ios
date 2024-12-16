@@ -278,7 +278,7 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                     self.buttons.append(closeSeatButtonComponent)
                     self.addSubview(closeSeatButtonComponent)
                 }
-            case .showSpeakerButton:
+            case .switchAudioOutputButton:
                 let speakerButtonComponent: ZegoSwitchAudioOutputButton = ZegoSwitchAudioOutputButton()
                 speakerButtonComponent.useSpeaker = self.config.useSpeakerWhenJoining
                 if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {
@@ -441,22 +441,38 @@ class ZegoLiveAudioRoomBottomBar: UIView {
         if ((self.currentHost?.userID) == nil)  {
             sender.isSelected = !sender.isSelected
             self.setupLayout()
+//            ZegoLiveAudioTipView.showWarn("host is not online", onView: self.superview)
+            print("applyOrCancelSeat host is not online")
             return
         }
         self.setupLayout()
         if sender.isSelected {
+            ZegoUIKit.getSignalingPlugin().removeCallInvitation(idList)
             ZegoUIKit.getSignalingPlugin().sendInvitation(idList, timeout: 60, type: 2, data: nil, notificationConfig: nil) { data in
                 guard let data = data else { return }
-                if data["code"] as! Int != 0 {
+                let code = data["code"] as! Int
+                if code != 0 {
                     sender.isSelected = !sender.isSelected
                     self.setupLayout()
+                    var message:String = code == 6000104 ? self.config.translationText.netWorkFailedToast : self.config.translationText.inviteCoHostFailedToast
+//                    ZegoLiveAudioTipView.showWarn(message, onView: self.superview)
+                    print("[log] sendInvitation:\(message)")
                 }
             }
         } else {
             ZegoUIKit.getSignalingPlugin().cancelInvitation(idList, data: nil) { data in
                 guard let data = data else { return }
-                if data["code"] as! Int != 0 {
-                    sender.isSelected = !sender.isSelected
+                let code = data["code"] as! Int
+                if code != 0 {
+                    // 邀请已取消
+                    if code == 6000276 {
+                        sender.isSelected = false
+                    } else {
+                        sender.isSelected = !sender.isSelected
+                    }
+                    var message:String = code == 6000104 ? self.config.translationText.netWorkFailedToast : self.config.translationText.inviteCoHostFailedToast
+//                    ZegoLiveAudioTipView.showWarn( message, onView: self.superview)
+                    print("[log] cancelInvitation:\(message)")
                     self.setupLayout()
                 }
             }

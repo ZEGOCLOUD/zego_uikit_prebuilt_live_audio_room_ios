@@ -129,7 +129,7 @@ class ZegoLiveAudioAuthorizedCheck: NSObject {
        if type == .micAlter {
             title = text.microphonePermissionTitle
             message = text.microphonePermissionMessage
-            cancelStr = text.memberListTitle
+            cancelStr = text.cancelMenuDialogButton
             sureStr = text.microphonePermissionConfirmButtonName
         }
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)

@@ -15,7 +15,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomConfig: NSObject {
     public var takeSeatIndexWhenJoining: Int = -1
     public var turnOnMicrophoneWhenJoining: Bool = false
     public var useSpeakerWhenJoining: Bool = true
-    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.closeSeatButton,.showSpeakerButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.showSpeakerButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
+    public var bottomMenuBarConfig: ZegoBottomMenuBarConfig = ZegoBottomMenuBarConfig(hostButtons: [.closeSeatButton,.switchAudioOutputButton, .showMemberListButton,.toggleMicrophoneButton], speakerButtons: [.switchAudioOutputButton,.showMemberListButton,.toggleMicrophoneButton], audienceButtons: [.showMemberListButton])
     // 如果进房时发现房间属性有“lockseat”这个key，则不处理
     // 主播是否进房时就调用closeSeats方法
     public var closeSeatsWhenJoin = true
@@ -214,6 +214,8 @@ public class ZegoTranslationText: NSObject {
     public var repeatInviteCoHostFailedToast:String = "You've sent the co-host invitation, please wait for confirmation."
     public var inviteCoHostFailedToast: String = "Failed to connect with the co-host，please try again."
     public var muteSpeakerMicDialogButton: String = "Sound off %@"
+    public var tryAgainToastString = "Please try again later"
+    public var netWorkFailedToast = "Network exception, please check the network"
    @objc public init(language:ZegoUIKitLanguage) {
       super.init()
       self.language = language
@@ -256,6 +258,8 @@ public class ZegoTranslationText: NSObject {
         repeatInviteCoHostFailedToast = "您已发送连麦邀请，请等待确认。"
         inviteCoHostFailedToast = "连麦失败，请重试。"
         muteSpeakerMicDialogButton = "静音 %@"
+        netWorkFailedToast = "网络异常，请检查网络"
+        tryAgainToastString = "请稍后再试"
       }
     }
 

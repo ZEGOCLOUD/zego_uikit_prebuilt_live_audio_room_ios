@@ -74,7 +74,7 @@ enum ZegoUIKitLiveAudioIconSetType: String, Hashable {
     case leaveButton
     case toggleMicrophoneButton
     case showMemberListButton
-    case showSpeakerButton
+    case switchAudioOutputButton
     case closeSeatButton
     case applyTakeSeatButton
 }

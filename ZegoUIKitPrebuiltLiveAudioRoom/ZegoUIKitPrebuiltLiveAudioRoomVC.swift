@@ -28,7 +28,7 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: LiveAudioRoomVCApi {
     @objc public func setBackgroundView(_ view: UIView) {
         self.backgroundView.setBackgroundView(view)
     }
-  
+    
     @objc public func applyToTakeSeat(callback: ((Int, String) -> Void)?) {
         self.bottomBar.applyToTakeSeat(callback: callback)
     }
@@ -96,7 +96,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     
     @objc public var inRoomMessageViewConfig: ZegoInRoomMessageViewConfig = ZegoInRoomMessageViewConfig() {
         didSet{
-          self.messageView.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
+            self.messageView.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
         }
     }
     
@@ -166,6 +166,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         } else if config.role == .speaker && config.hostSeatIndexes.contains(config.takeSeatIndexWhenJoining) {
             config.role = .audience
             config.takeSeatIndexWhenJoining = -1
+            self.bottomBar.memberButton.seatLock = false
         }
         self.config = config
         self.seatLock = config.closeSeatsWhenJoin
@@ -220,16 +221,16 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     
     lazy var messageView: ZegoInRoomMessageView = {
         
-      if self.inRoomMessageViewConfig.roomMessageDelegate == nil{
-        let messageList = ZegoInRoomMessageView()
-        messageList.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
-        return messageList
-      } else {
-        let messageList = ZegoInRoomMessageView(frame: CGRectZero, customerRegisterCell: true)
-        messageList.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
-        messageList.delegate = self.help
-        return messageList
-      }
+        if self.inRoomMessageViewConfig.roomMessageDelegate == nil{
+            let messageList = ZegoInRoomMessageView()
+            messageList.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
+            return messageList
+        } else {
+            let messageList = ZegoInRoomMessageView(frame: CGRectZero, customerRegisterCell: true)
+            messageList.isHidden = !self.inRoomMessageViewConfig.inRoomMessageViewVisible
+            messageList.delegate = self.help
+            return messageList
+        }
     }()
     
     lazy var inputTextView: ZegoInRoomMessageInput = {
@@ -244,6 +245,12 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         return view
     }()
     
+    public override func viewWillDisappear(_ animated: Bool) {
+        print("[log] viewWillDisappear")
+    }
+    public override func viewDidDisappear(_ animated: Bool) {
+        print("[log] viewDidDisappear")
+    }
     public override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.colorWithHexString("#F4F4F6")
@@ -264,7 +271,7 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     }
     
     @objc public func registerInRoomMessageItemView(_ cellClass: AnyClass?, forCellReuseIdentifier: String) {
-      self.messageView.registerClassForCellReuseIdentifier(cellClass, forCellReuseIdentifier: forCellReuseIdentifier)
+        self.messageView.registerClassForCellReuseIdentifier(cellClass, forCellReuseIdentifier: forCellReuseIdentifier)
     }
     
     @objc func keyboardWillChangeFrame(node : Notification){
@@ -274,7 +281,8 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         let y = endFrame.origin.y
         
         let margin = UIScreen.main.bounds.size.height - y
-        UIView.animate(withDuration: duration) {
+        UIView.animate(withDuration: duration) { [weak self] in
+            guard let self = self else { return }
             self.view.layoutIfNeeded()
             if margin > 0 {
                 self.inputTextView.frame = CGRect(x: 0, y: UIScreen.main.bounds.size.height - margin - self.inputViewHeight, width: UIScreen.main.bounds.size.width, height: self.inputViewHeight)
@@ -289,8 +297,10 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         self.backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height)
         self.leaveButton.frame = CGRect(x: self.view.frame.size.width - 34 - 15, y: 57, width: 34, height: 34)
         self.setContainerFrame()
-        self.messageView.frame = CGRect(x: 0, y: self.view.frame.size.height - 62 - 200, width: UIKitLiveAudioScreenWidth - 16 - 89, height: 200)
-        self.bottomBar.frame = CGRect(x: 0, y: self.view.frame.size.height - 62, width: self.view.frame.size.width, height: 62)
+        
+        let bottomPadding: CGFloat = UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0
+        self.bottomBar.frame = CGRect(x: 0, y: self.view.frame.size.height - (bottomPadding > 0 ? bottomPadding - 10 : bottomPadding) - 62, width: self.view.frame.size.width, height: 62)
+        self.messageView.frame = CGRect(x: 0, y: self.bottomBar.frame.origin.y - 200, width: UIKitLiveAudioScreenWidth - 16 - 89, height: 200)
         
     }
     
@@ -307,31 +317,41 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
               let userID = self.userID,
               let userName = self.userName
         else { return }
-        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID) { errorCode in
-            
-        }
+        
         if self.config.turnOnMicrophoneWhenJoining {
             self.requestMicPermission(true)
         }
-        ZegoUIKit.shared.turnMicrophoneOn(self.userID ?? "", isOn: self.config.turnOnMicrophoneWhenJoining)
-        ZegoUIKit.shared.turnCameraOn(self.userID ?? "", isOn: false)
-        ZegoUIKit.getSignalingPlugin().login(userID, userName: userName) { data in
-            guard let data = data else { return }
-            if data["code"] as! Int == 0 {
-                self.joinRTCAndZIMRoom { errorCode in
-                    if errorCode == 6000323 {
-                        ZegoUIKit.getSignalingPlugin().leaveRoom { data in
-                            self.joinRTCAndZIMRoom(callback: nil)
+        
+        ZegoUIKit.shared.joinRoom(userID, userName: userName, roomID: roomID) {[weak self] errorCode in
+            guard let self = self else { return }
+            if errorCode != 0{
+                ZegoLiveAudioTipView.showWarn("login room failed", onView: self.view)
+                self.help.onLeaveButtonClick(true)
+            }else {
+                ZegoUIKit.shared.turnMicrophoneOn(self.userID ?? "", isOn: self.config.turnOnMicrophoneWhenJoining)
+                ZegoUIKit.shared.turnCameraOn(self.userID ?? "", isOn: false)
+                ZegoUIKit.getSignalingPlugin().login(userID, userName: userName) {[weak self] data in
+                    guard let data = data else { return }
+                    guard let self = self else { return }
+                    if data["code"] as! Int == 0 {
+                        self.joinRTCAndZIMRoom { errorCode in
+                            
                         }
+                    } else {
+                        ZegoLiveAudioTipView.showWarn("login room failed", onView: self.view)
+                        self.help.onLeaveButtonClick(true)
                     }
                 }
             }
         }
+        
+
     }
     
     func joinRTCAndZIMRoom(callback: ((Int) -> Void)?) {
-        ZegoUIKit.getSignalingPlugin().joinRoom(roomID: self.roomID!) { data in
+        ZegoUIKit.getSignalingPlugin().joinRoom(roomID: self.roomID!) { [weak self] data in
             guard let data = data else { return }
+            guard let self = self else { return }
             let code = data["code"] as! Int
             if code == 0  {
                 self.currentRole = .audience
@@ -339,20 +359,37 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
                 ZegoUIKit.getSignalingPlugin().setUsersInRoomAttributes("avatar", value: self.config.userAvatarUrl ?? "", userIDs: [self.userID!], roomID: self.roomID!, callBack: nil)
                 self.setCurrentUserAttributes()
                 self.joinRoomAfterUpdateRoomInfo()
-                self.queryInRoomUserAttribute()
                 self.setSeatLockState()
             } else {
                 print("login IM fail")
+                // 6000323 可加入房间已满
+                // 1002001 房间已存在
+                if code != 6000323 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                        guard let self = self else { return }
+                        ZegoLiveAudioTipView.showWarn("login room failed", onView: self.view)
+                        self.help.onLeaveButtonClick(true)
+                    }
+                }
             }
             callback?(code)
         }
     }
+    
     func setSeatLockState() {
         if self.config.role == .host {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self = self else { return }
                 self.bottomBar.lockSeatButton?.isLock = self.seatLock
-                ZegoUIKit.shared.setRoomProperty("lockseat", value: self.seatLock ? "1" : "0", callback: ZegoUIKitCallBack? {data in
-                    
+                ZegoUIKit.shared.setRoomProperty("lockseat", value: self.seatLock ? "1" : "0", callback: ZegoUIKitCallBack? {[weak self] data in
+                    guard let self = self else { return }
+                    guard let data = data else { return }
+                    let code: Int = data["code"] as? Int ?? -1
+                    if code != 0 {
+                        ZegoLiveAudioTipView.showWarn("lock seat failed", onView: self.view)
+                    } else {
+                        self.bottomBar.lockSeatButton?.isLock = !self.seatLock
+                    }
                 })
             }
         }
@@ -377,7 +414,8 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     }
     
     func queryInRoomUserAttribute() {
-        ZegoUIKit.getSignalingPlugin().queryRoomProperties { data in
+        ZegoUIKit.getSignalingPlugin().queryRoomProperties {[weak self] data in
+            guard let self = self else { return }
             print("queryInRoomUserAttribute \(String(describing: data))")
             guard let data = data else { return }
             let code: Int = data["code"] as? Int ?? 0
@@ -388,7 +426,8 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
             }
         }
         
-        ZegoUIKit.getSignalingPlugin().queryUsersInRoomAttributes(ZegoUsersInRoomAttributesQueryConfig()) { data in
+        ZegoUIKit.getSignalingPlugin().queryUsersInRoomAttributes(ZegoUsersInRoomAttributesQueryConfig()) { [weak self] data in
+            guard let self = self else { return }
             guard let data = data else { return }
             print("queryInRoomUserAttribute data:%@",data)
             if data["code"] as! Int == 0 {
@@ -460,7 +499,12 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     
     
     deinit {
-        print("===ZegoUIKitPrebuiltLiveAudioVC deinit")
+        print("\(#function) in \(type(of: self))")
+        NotificationCenter.default.removeObserver(
+            self,
+            name: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil
+        )
     }
     
     @objc public func setSeatTakingRequestAudienceObserve(_ observe:ZegoSeatTakingRequestAudienceDelegate) {
@@ -489,12 +533,14 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
     func joinRoomAfterUpdateRoomInfo() {
         guard let userID = self.userID else { return }
         if self.config.role == .host {
-            ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(self.config.takeSeatIndexWhenJoining)", value: userID, isDeleteAfterOwnerLeft: true, isForce: true, isUpdateOwner: true) { data in
+            ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(self.config.takeSeatIndexWhenJoining)", value: userID, isDeleteAfterOwnerLeft: true, isForce: true, isUpdateOwner: true) { [weak self] data in
                 guard let data = data else { return }
+                guard let self = self else { return }
                 if data["code"] as! Int == 0 {
                     guard let roomID = self.roomID else { return }
-                    ZegoUIKit.getSignalingPlugin().setUsersInRoomAttributes("role", value: "\(self.config.role.rawValue)", userIDs: [userID], roomID: roomID) { data in
+                    ZegoUIKit.getSignalingPlugin().setUsersInRoomAttributes("role", value: "\(self.config.role.rawValue)", userIDs: [userID], roomID: roomID) {[weak self] data in
                         guard let data = data else { return }
+                        guard let self = self else { return }
                         if data["code"] as! Int != 0 {
                             self.currentRole = .audience
                             ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(self.config.takeSeatIndexWhenJoining)"], isForce: true, callBack: nil)
@@ -503,16 +549,19 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
                             // take seat sucess
                             self.currentRole = .host
                             self.updateLayout()
+                            self.queryInRoomUserAttribute()
                         }
                     }
                 } else {
                     self.currentRole = .audience
                     self.config.takeSeatIndexWhenJoining = -1
+                    self.queryInRoomUserAttribute()
                 }
             }
         } else if self.config.role == .speaker {
-            ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(self.config.takeSeatIndexWhenJoining)", value: userID, isDeleteAfterOwnerLeft: true, isForce: true, isUpdateOwner: false) { data in
+            ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(self.config.takeSeatIndexWhenJoining)", value: userID, isDeleteAfterOwnerLeft: true, isForce: true, isUpdateOwner: false) {[weak self] data in
                 guard let data = data else { return }
+                guard let self = self else { return }
                 if data["code"] as! Int != 0 {
                     self.currentRole = .audience
                     self.config.takeSeatIndexWhenJoining = -1
@@ -708,14 +757,15 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
     }
     
     func updateRoomProperty(seatIndex: Int, callback: ((Bool) -> Void)? = nil) {
-        ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(seatIndex)", value: self.userID ?? "", isDeleteAfterOwnerLeft: true, isForce: false, isUpdateOwner: false) { data in
+        ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(seatIndex)", value: self.userID ?? "", isDeleteAfterOwnerLeft: true, isForce: false, isUpdateOwner: false) {[weak self] data in
             guard let data = data else { return }
+            guard let self = self else { return }
             if data["code"] as! Int == 0 {
                 self.currentRole = .speaker
                 self.roomProperties.updateValue(self.userID ?? "", forKey: "\(seatIndex)")
-                self.updateLayout()
                 ZegoUIKit.shared.turnMicrophoneOn(self.userID ?? "", isOn: true)
                 ZegoUIKit.shared.turnCameraOn(self.userID ?? "", isOn: false)
+                self.updateLayout()
                 callback?(true)
                 
             } else {
@@ -727,8 +777,9 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
     
     func leaveSeat(_ index: Int) {
         if index == 0 {return}
-        ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(index)"], isForce: true) { data in
+        ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(index)"], isForce: true) {[weak self] data in
             guard let data = data else { return }
+            guard let self = self else { return }
             if data["code"] as! Int == 0 {
                 self.currentRole = .audience
                 self.roomProperties.removeValue(forKey: "\(index)")
@@ -754,8 +805,9 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
         if index == 0 {return}
         guard let roomProperties = ZegoUIKit.getSignalingPlugin().getRoomProperties() else { return }
         if roomProperties.keys.contains("\(index)") {
-            ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(index)"], isForce: true) { data in
+            ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(index)"], isForce: true) {[weak self] data in
                 guard let data = data else { return }
+                guard let self = self else { return }
                 if data["code"] as! Int != 0  {
                     let message = self.config.translationText.removeSpeakerFailedToast.replacingOccurrences(of: "%@", with: self.currentClickSeatModel?.userName ?? "")
                     ZegoLiveAudioTipView.showWarn(message, onView: self.view)
@@ -779,9 +831,10 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
         ZegoUIKit.getSignalingPlugin().beginRoomPropertiesBatchOperation(false, isDeleteAfterOwnerLeft: true, isUpdateOwner: false)
         ZegoUIKit.getSignalingPlugin().updateRoomProperty("\(seatModel.index)", value: userID, callback: nil)
         ZegoUIKit.getSignalingPlugin().deleteRoomProperties(["\(oldIndex)"], callBack: nil)
-        ZegoUIKit.getSignalingPlugin().endRoomPropertiesBatchOperation { data in
-            self.isSwitchingSeat = false
+        ZegoUIKit.getSignalingPlugin().endRoomPropertiesBatchOperation {[weak self] data in
+            guard let self = self else { return }
             guard let data = data else { return }
+            self.isSwitchingSeat = false
             if data["code"] as! Int == 0 {
                 self.roomProperties.removeValue(forKey: "\(oldIndex)")
                 self.roomProperties.updateValue(self.userID ?? "", forKey: "\(seatModel.index)")
@@ -900,6 +953,7 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
     }
     
     func updateRequestCoHost(_ user: ZegoUIKitUser, isAdd: Bool) {
+        print("[log] 申请数量变化:\(self.requestCoHostCount) isAdd:\(isAdd)")
         if isAdd {
             self.requestCoHostCount = self.requestCoHostCount + 1
         } else {
@@ -908,28 +962,30 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
         if self.seatLock == false {
             self.requestCoHostCount = 0
         }
+        print("[log] 申请数量更新之后:\(self.requestCoHostCount)")
+
         self.bottomBar.showRedDot = self.requestCoHostCount > 0
     }
     
     func requestCameraAndMicPermission(_ needDelay: Bool = false) {
         var requestCamerEnd: Bool = false
         var requestMicEnd: Bool = false
-        if !ZegoLiveAudioAuthorizedCheck.isCameraAuthorizationDetermined() {
-            requestCamerEnd = false
-            //not determined
-            ZegoLiveAudioAuthorizedCheck.requestCameraAccess {
-                //agree
-                requestCamerEnd = true
-                self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: false)
-            } cancelCompletion: {
-                //disagree
-                requestCamerEnd = true
-                self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: false)
-            }
-        } else {
-            requestCamerEnd = true
-            self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: needDelay)
-        }
+//        if !ZegoLiveAudioAuthorizedCheck.isCameraAuthorizationDetermined() {
+//            requestCamerEnd = false
+//            //not determined
+//            ZegoLiveAudioAuthorizedCheck.requestCameraAccess {
+//                //agree
+//                requestCamerEnd = true
+//                self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: false)
+//            } cancelCompletion: {
+//                //disagree
+//                requestCamerEnd = true
+//                self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: false)
+//            }
+//        } else {
+//            requestCamerEnd = true
+//            self.showCameraOrMicAlter(requestCamerEnd, showMic: requestMicEnd, needDelay: needDelay)
+//        }
         
         if !ZegoLiveAudioAuthorizedCheck.isMicrophoneAuthorizationDetermined() {
             requestMicEnd = false
@@ -1143,19 +1199,22 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
         let newList:[UIView] = buttonList
         let vc: ZegoLiveAudioMoreView = ZegoLiveAudioMoreView()
         vc.buttonList = newList
-        self.liveAudioVC?.view.addSubview(vc.view)
-        self.liveAudioVC?.addChild(vc)
+        liveAudioVC?.view.addSubview(vc.view)
+        liveAudioVC?.addChild(vc)
     }
     
     func onLeaveButtonClick(_ isLeave: Bool) {
         if isLeave {
-            self.liveAudioVC?.cancelMyInvitations()
-            self.liveAudioVC?.bottomBar.cancelOwnerApply()
+            liveAudioVC?.cancelMyInvitations()
+            liveAudioVC?.bottomBar.cancelOwnerApply()
+            // 退出 zim 房间
             ZegoUIKit.getSignalingPlugin().leaveRoom { data in
                 ZegoUIKit.getSignalingPlugin().loginOut()
             }
-            liveAudioVC?.dismiss(animated: true)
+            // 退出rtc 房间
+            ZegoUIKit.shared.leaveRoom()
             liveAudioVC?.delegate?.onLeaveLiveAudioRoom?()
+            liveAudioVC?.dismiss(animated: true)
         }
     }
     
@@ -1237,60 +1296,60 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
     func onRoomPropertyUpdated(_ key: String, oldValue: String, newValue: String) {
         if key == "lockseat" {
             if newValue == "1" {
-                self.liveAudioVC?.seatLock = true
-                self.liveAudioVC?.setLayoutSeatToLock(true)
-                self.liveAudioVC?.seatsLockedDelegate?.onSeatsClosed?()
+                liveAudioVC?.seatLock = true
+                liveAudioVC?.setLayoutSeatToLock(true)
+                liveAudioVC?.seatsLockedDelegate?.onSeatsClosed?()
             } else {
-                self.liveAudioVC?.seatLock = false
-                self.liveAudioVC?.setLayoutSeatToLock(false)
-                self.liveAudioVC?.bottomBar.hostUnlockSeatCancelOwnerApply()
-              self.liveAudioVC?.seatsLockedDelegate?.onSeatsOpened?()
+                liveAudioVC?.seatLock = false
+                liveAudioVC?.setLayoutSeatToLock(false)
+                liveAudioVC?.bottomBar.hostUnlockSeatCancelOwnerApply()
+                liveAudioVC?.seatsLockedDelegate?.onSeatsOpened?()
             }
             if liveAudioVC?.currentRole == .audience {
                 if newValue == "1" {
-                    if ((self.liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == false) {
-                        self.liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.insert(.applyTakeSeatButton, at: 0)
+                    if ((liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == false) {
+                        liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.insert(.applyTakeSeatButton, at: 0)
                     }
                 } else {
-                    if ((self.liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == true) {
-                        self.liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.remove(at: 0)
+                    if ((liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == true) {
+                        liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.remove(at: 0)
                     }
                 }
-                self.liveAudioVC?.bottomBar.config = self.liveAudioVC?.config ?? ZegoUIKitPrebuiltLiveAudioRoomConfig.audience()
+                liveAudioVC?.bottomBar.config = liveAudioVC?.config ?? ZegoUIKitPrebuiltLiveAudioRoomConfig.audience()
             }
-            self.liveAudioVC?.cancelMyInvitations()
-            self.liveAudioVC?.refuseAllRequest()
-            self.liveAudioVC?.bottomBar.memberButton.seatLock = (newValue as NSString).boolValue
+            liveAudioVC?.cancelMyInvitations()
+            liveAudioVC?.refuseAllRequest()
+            liveAudioVC?.bottomBar.memberButton.seatLock = (newValue == "1") ? true : false
         }
     }
     
     
     func onUsersInRoomAttributesUpdated(_ updateKeys: [String]?, oldAttributes: [ZegoUserInRoomAttributesInfo]?, attributes: [ZegoUserInRoomAttributesInfo]?, editor: ZegoUIKitUser?) {
-//        print("nRoomAttributesUpdated \(String(describing: attributes))")
+        //        print("nRoomAttributesUpdated \(String(describing: attributes))")
         
         // Update the user's role
         // the live vc's usersInRoomAttributes only used to set user role.
         guard let attributes = attributes else { return }
         for attribute in attributes {
             if attribute.attributes.keys.contains("role") {
-                let oldAttribute = self.liveAudioVC?.usersInRoomAttributes?.filter({ $0.userID == attribute.userID }).first
+                let oldAttribute = liveAudioVC?.usersInRoomAttributes?.filter({ $0.userID == attribute.userID }).first
                 if oldAttribute == nil {
-                    self.liveAudioVC?.usersInRoomAttributes?.append(attribute)
+                    liveAudioVC?.usersInRoomAttributes?.append(attribute)
                 } else {
                     oldAttribute?.attributes = attribute.attributes
                 }
             }
         }
-        self.liveAudioVC?.updateLayout()
+        liveAudioVC?.updateLayout()
     }
     
     func onRoomMemberLeft(_ userIDList: [String]?, roomID: String) {
-//        print("[ZIM connectionState] user", userIDList ?? "")
-        if self.liveAudioVC?.currentRole != .host {
+        //        print("[ZIM connectionState] user", userIDList ?? "")
+        if liveAudioVC?.currentRole != .host {
             if let userIDList = userIDList {
                 for userID in userIDList {
-                    if userID == self.liveAudioVC?.currentHost?.userID {
-                        self.liveAudioVC?.currentHost = nil
+                    if userID == liveAudioVC?.currentHost?.userID {
+                        liveAudioVC?.currentHost = nil
                     }
                 }
             }
@@ -1298,47 +1357,59 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
     }
     
     func onSignalPluginRoomPropertyUpdated(_ key: String, oldValue: String, newValue: String) {
-        guard let userID = self.liveAudioVC?.userID else { return }
-        self.liveAudioVC?.roomProperties.updateValue(newValue, forKey: key)
+        guard let userID = liveAudioVC?.userID else { return }
+        liveAudioVC?.roomProperties.updateValue(newValue, forKey: key)
         if oldValue == userID && newValue == "" {
             // 自己下麦
-            self.liveAudioVC?.currentRole = .audience
             ZegoUIKit.shared.turnMicrophoneOn(userID, isOn: false)
-            if self.liveAudioVC?.currentSeatAction == .leave {
-                self.liveAudioVC?.currentSheetView?.disMiss()
-                self.liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
+            if liveAudioVC?.currentSeatAction == .leave {
+                liveAudioVC?.currentSheetView?.disMiss()
+                liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
             }
-            self.liveAudioVC?.roomProperties.removeValue(forKey: key)
-        } else if oldValue != userID && oldValue == self.liveAudioVC?.currentClickSeatModel?.userID && newValue == "" {
-            if self.liveAudioVC?.currentSeatAction == .remove {
-                self.liveAudioVC?.currentSheetView?.disMiss()
-                self.liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
+            liveAudioVC?.roomProperties.removeValue(forKey: key)
+            
+            // 同步锁麦状态
+            if liveAudioVC?.seatLock == true {
+                if ((liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == false) {
+                    liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.insert(.applyTakeSeatButton, at: 0)
+                }
+            } else {
+                if ((liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.contains(.applyTakeSeatButton)) == true) {
+                    liveAudioVC?.config.bottomMenuBarConfig.audienceButtons.remove(at: 0)
+                }
             }
-            self.liveAudioVC?.roomProperties.removeValue(forKey: key)
+            liveAudioVC?.bottomBar.config = liveAudioVC?.config ?? ZegoUIKitPrebuiltLiveAudioRoomConfig.audience()
+            liveAudioVC?.currentRole = .audience
+        } else if oldValue != userID && oldValue == liveAudioVC?.currentClickSeatModel?.userID && newValue == "" {
+            if liveAudioVC?.currentSeatAction == .remove {
+                liveAudioVC?.currentSheetView?.disMiss()
+                liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
+            }
+            liveAudioVC?.roomProperties.removeValue(forKey: key)
         } else if oldValue != userID && newValue == "" {
             // 别人下麦
-            if self.liveAudioVC?.currentSeatAction == .remove {
-                self.liveAudioVC?.currentSheetView?.disMiss()
-                self.liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
+            if liveAudioVC?.currentSeatAction == .remove {
+                liveAudioVC?.currentSheetView?.disMiss()
+                liveAudioVC?.currentAlterView?.dismiss(animated: false, completion: nil)
             }
-            self.liveAudioVC?.roomProperties.removeValue(forKey: key)
+            liveAudioVC?.roomProperties.removeValue(forKey: key)
             
         }
-        self.liveAudioVC?.updateLayout()
+        liveAudioVC?.updateLayout()
     }
     
     func onUserCountOrPropertyChanged(_ userList: [ZegoUIKitUser]?) {
-//        self.liveAudioVC?.delegate?.onUserCountOrPropertyChanged?(userList)
-        self.liveAudioVC?.userCountOrPropertyChangedDelegate?.onUserCountOrPropertyChanged?(userList: userList ?? [])
+        //        liveAudioVC?.delegate?.onUserCountOrPropertyChanged?(userList)
+        liveAudioVC?.userCountOrPropertyChangedDelegate?.onUserCountOrPropertyChanged?(userList: userList ?? [])
     }
     
-  
+    
     func onSignalPluginRoomPropertyFullUpdated(_ updateKeys: [String], oldProperties: [String : String], properties: [String : String]) {
         var takenSeats = [Int:ZegoUIKitUser]()
         var untakenSeats = [Int]()
         
         var allSeats:Int = 0
-        if let rowConfigs = self.liveAudioVC?.config.layoutConfig.rowConfigs as? [ZegoLiveAudioRoomLayoutRowConfig] {
+        if let rowConfigs = liveAudioVC?.config.layoutConfig.rowConfigs as? [ZegoLiveAudioRoomLayoutRowConfig] {
             for rowConfig in rowConfigs {
                 allSeats  = allSeats + rowConfig.count
             }
@@ -1347,45 +1418,46 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
             return
         }
         for seatNumber in 0...(allSeats - 1) {
-            if self.liveAudioVC?.roomProperties["\(seatNumber)"] == nil {
+            if liveAudioVC?.roomProperties["\(seatNumber)"] == nil {
                 untakenSeats.append(seatNumber)
             } else {
-                let userID:String = self.liveAudioVC?.roomProperties["\(seatNumber)"] ?? ""
+                let userID:String = liveAudioVC?.roomProperties["\(seatNumber)"] ?? ""
                 takenSeats.updateValue(ZegoUIKitUser(userID, userID), forKey: seatNumber)
             }
         }
         
-        self.liveAudioVC?.seatChangedDelegate?.onSeatsChanged?(takenSeats: takenSeats, untakenSeats: untakenSeats)
+        liveAudioVC?.seatChangedDelegate?.onSeatsChanged?(takenSeats: takenSeats, untakenSeats: untakenSeats)
     }
     func onRoomStateChanged(_ reason: ZegoUIKitRoomStateChangedReason, errorCode: Int32, extendedData: [AnyHashable : Any], roomID: String) {
-//        print("[RTC connectionState] reason = \(reason) errorCode = \(errorCode)")
+        //        print("[RTC connectionState] reason = \(reason) errorCode = \(errorCode)")
     }
     
     func onIMRoomStateChanged(_ state: Int, event: Int, roomID: String) {
         
-//        print("[ZIM RoomStateChanged]",state,event,roomID)
+        //        print("[ZIM RoomStateChanged]",state,event,roomID)
         //ZIMRoomStateDisconnected ZIMRoomEventConnectTimeout
         if state == 0 && event == 9 {
             ZegoUIKit.getSignalingPlugin().clearRoomInfo()
-            ZegoUIKit.getSignalingPlugin().joinRoom(roomID: self.liveAudioVC?.roomID ?? "") { data in
-                self.liveAudioVC?.queryInRoomUserAttribute()
-                self.liveAudioVC?.currentRole = .audience
-                ZegoUIKit.shared.turnMicrophoneOn(self.liveAudioVC?.userID ?? "", isOn: false)
-                ZegoUIKit.shared.turnCameraOn(self.liveAudioVC?.userID ?? "", isOn: false)
+            ZegoUIKit.getSignalingPlugin().joinRoom(roomID: liveAudioVC?.roomID ?? "") { [weak self] data in
+                guard let self = self else { return }
+                liveAudioVC?.queryInRoomUserAttribute()
+                liveAudioVC?.currentRole = .audience
+                ZegoUIKit.shared.turnMicrophoneOn(liveAudioVC?.userID ?? "", isOn: false)
+                ZegoUIKit.shared.turnCameraOn(liveAudioVC?.userID ?? "", isOn: false)
             }
         } else if state == 2 {
             //ZIMRoomStateConnected
-            self.liveAudioVC?.queryInRoomUserAttribute()
+            liveAudioVC?.queryInRoomUserAttribute()
         }
     }
-  
-  //ZegoInRoomMessageViewDelegate
-  func getInRoomMessageItemView(_ tableView: UITableView, indexPath: IndexPath, message: ZegoInRoomMessage) -> UITableViewCell? {
-    if self.liveAudioVC?.inRoomMessageViewConfig.roomMessageDelegate != nil {
-      return self.liveAudioVC?.inRoomMessageViewConfig.roomMessageDelegate?.getInRoomMessageItemView?(tableView, indexPath: indexPath, message: message)
-    } else {
-      return nil
-    }
     
-  }
+    //ZegoInRoomMessageViewDelegate
+    func getInRoomMessageItemView(_ tableView: UITableView, indexPath: IndexPath, message: ZegoInRoomMessage) -> UITableViewCell? {
+        if liveAudioVC?.inRoomMessageViewConfig.roomMessageDelegate != nil {
+            return liveAudioVC?.inRoomMessageViewConfig.roomMessageDelegate?.getInRoomMessageItemView?(tableView, indexPath: indexPath, message: message)
+        } else {
+            return nil
+        }
+        
+    }
 }
