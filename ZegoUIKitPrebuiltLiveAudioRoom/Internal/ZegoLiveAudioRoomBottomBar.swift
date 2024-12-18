@@ -278,7 +278,7 @@ class ZegoLiveAudioRoomBottomBar: UIView {
                     self.buttons.append(closeSeatButtonComponent)
                     self.addSubview(closeSeatButtonComponent)
                 }
-            case .switchAudioOutputButton:
+            case .switchAudioOutputButton, .showSpeakerButton:
                 let speakerButtonComponent: ZegoSwitchAudioOutputButton = ZegoSwitchAudioOutputButton()
                 speakerButtonComponent.useSpeaker = self.config.useSpeakerWhenJoining
                 if self.config.bottomMenuBarConfig.maxCount < self.barButtons.count && index >= self.config.bottomMenuBarConfig.maxCount {

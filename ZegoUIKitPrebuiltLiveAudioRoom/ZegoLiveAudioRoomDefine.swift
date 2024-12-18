@@ -74,6 +74,10 @@ enum ZegoUIKitLiveAudioIconSetType: String, Hashable {
     case leaveButton
     case toggleMicrophoneButton
     case showMemberListButton
+    
+    @available(*, deprecated, message: "showSpeakerButton is deprecated. Use switchAudioOutputButton instead.")
+    case showSpeakerButton
+    
     case switchAudioOutputButton
     case closeSeatButton
     case applyTakeSeatButton
