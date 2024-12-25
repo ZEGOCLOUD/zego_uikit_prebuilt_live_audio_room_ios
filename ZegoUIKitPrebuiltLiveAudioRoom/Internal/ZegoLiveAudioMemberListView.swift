@@ -199,7 +199,9 @@ extension ZegoLiveAudioMemberListView: ZegoMemberListDelegate,ZegoLiveAudioMembe
     
     func disAgreeButtonDidClick(_ user: ZegoUIKitUser) {
         guard let userID = user.userID else { return }
-        ZegoUIKit.getSignalingPlugin().refuseInvitation(userID, data: nil)
+        ZegoUIKit.getSignalingPlugin().refuseInvitation(userID, data: nil) { data in
+            
+        }
         self.requestCoHostList = self.requestCoHostList?.filter{
             return $0.userID != user.userID
         }

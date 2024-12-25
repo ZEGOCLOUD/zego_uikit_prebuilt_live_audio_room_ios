@@ -15,6 +15,23 @@ enum ZegoLiveAudioSeatActionType: Int {
     case remove
 }
 
+
+let audioRoomInitReportString = "liveaudioroom/init"
+let audioRoomUnInitReportString = "liveaudioroom/unInit"
+
+//Host
+let audioRoomHostLockSeatReportString = "liveaudioroom/host/lockseat"
+
+let audioRoomHostInviteReportString = "liveaudioroom/host/invite"
+let audioRoomHostReceiveApplyReportString = "liveaudioroom/host/receive"
+let audioRoomHostResponseApplyReportString = "liveaudioroom/host/apply"
+
+//Audience
+let audioRoomAudienceApplyReportString = "liveaudioroom/audience/apply"
+let audioRoomAudienceReceiveInviteReportString = "liveaudioroom/audience/receive/invite"
+let audioRoomAudienceHostStopReceiveDeviceReportString = "liveaudioroom/audience/device"
+let audioRoomAudienceRoleChangeReportString = "liveaudioroom/audience/role"
+
 extension ZegoUIKitPrebuiltLiveAudioRoomVC: LiveAudioRoomVCApi {
     
     @objc  public func addButtonToMenuBar(_ button: UIButton, role: ZegoLiveAudioRoomRole) {
@@ -43,7 +60,9 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: LiveAudioRoomVCApi {
     }
     
     @objc public func rejectSeatTakingRequest(audienceUserID:String) {
-        ZegoUIKit.getSignalingPlugin().refuseInvitation(audienceUserID, data: nil)
+        ZegoUIKit.getSignalingPlugin().refuseInvitation(audienceUserID, data: nil) { data in
+            
+        }
         self.addOrRemoveSeatListUser(ZegoUIKitUser(audienceUserID, audienceUserID), isAdd: false)
     }
     
@@ -156,6 +175,21 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
     ///   - config: Personalized configuration
     @objc public init(_ appID: UInt32, appSign: String, userID: String, userName: String, roomID: String, config: ZegoUIKitPrebuiltLiveAudioRoomConfig) {
         super.init(nibName: nil, bundle: nil)
+        
+        let audioSDKBundle = Bundle(identifier: "com.zegocloud.liveaudioroom")
+        let audioVersion = audioSDKBundle?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        
+        let UIKitSDKBundle = Bundle(identifier: "com.zegocloud.uikit")
+        let UIKitVersion = UIKitSDKBundle?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        
+        let initData = ["user_id": userID as AnyObject,
+                     "platform": "iOS" as AnyObject,
+                     "platform_version": UIDevice.current.systemVersion as AnyObject,
+                     "uikit_version": UIKitVersion as AnyObject,
+                     "liveaudioroom_version" :audioVersion as AnyObject]
+        
+        ReportUtil.sharedInstance().create(withAppID: appID, signOrToken: appSign, commonParams: initData)
+        
         let zegoLanguage: ZegoUIKitLanguage = config.translationText.getLanguage()
         let zegoUIKitLanguage = ZegoUIKitLanguage(rawValue: zegoLanguage.rawValue)!
         ZegoUIKitTranslationTextConfig.shared.translationText = ZegoUIKitTranslationText(language: zegoUIKitLanguage);
@@ -184,6 +218,10 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
             self.currentHost = ZegoUIKitUser.init(userID, userName)
         }
         self.help.liveAudioVC = self
+        
+        let reportData = ["error": 0 as AnyObject,
+                          "msg": "" as AnyObject]
+        ReportUtil.sharedInstance().reportEvent(audioRoomInitReportString, paramsDict: reportData)
     }
     
     required init?(coder: NSCoder) {
@@ -297,8 +335,8 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
         self.backgroundView.frame = CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height)
         self.leaveButton.frame = CGRect(x: self.view.frame.size.width - 34 - 15, y: 57, width: 34, height: 34)
         self.setContainerFrame()
-        
-        let bottomPadding: CGFloat = UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0
+        let keyWindow = UIApplication.shared.windows.first { $0.isKeyWindow }
+        let bottomPadding: CGFloat = keyWindow?.safeAreaInsets.bottom ?? 0
         self.bottomBar.frame = CGRect(x: 0, y: self.view.frame.size.height - (bottomPadding > 0 ? bottomPadding - 10 : bottomPadding) - 62, width: self.view.frame.size.width, height: 62)
         self.messageView.frame = CGRect(x: 0, y: self.bottomBar.frame.origin.y - 200, width: UIKitLiveAudioScreenWidth - 16 - 89, height: 200)
         
@@ -388,8 +426,13 @@ public class ZegoUIKitPrebuiltLiveAudioRoomVC: UIViewController {
                     if code != 0 {
                         ZegoLiveAudioTipView.showWarn("lock seat failed", onView: self.view)
                     } else {
-                        self.bottomBar.lockSeatButton?.isLock = !self.seatLock
+                        self.seatLock = !self.seatLock
+                        self.bottomBar.lockSeatButton?.isLock = self.seatLock
                     }
+//                    let reportData = ["room_id": 0 as AnyObject,
+//                                      "lock_seat": (self.seatLock == true ? "lock" : "noLock") as AnyObject,
+//                                      "error": code as AnyObject]
+//                    ReportUtil.sharedInstance().reportEvent(audioRoomHostLockSeatReportString, paramsDict: reportData)
                 })
             }
         }
@@ -1133,7 +1176,9 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
         self.invitateAlter = alterView
         let cancelButton: UIAlertAction = UIAlertAction.init(title: cancelStr, style: .cancel) { action in
             let dataDict: [String : AnyObject] = ["invitationID": invitationID as AnyObject]
-            ZegoUIKit.getSignalingPlugin().refuseInvitation(inviterID, data: dataDict.audio_jsonString)
+            ZegoUIKit.getSignalingPlugin().refuseInvitation(inviterID, data: dataDict.audio_jsonString) { data in
+                
+            }
             self.addOrRemoveAudienceReceiveInviteList(ZegoUIKitUser.init(inviterID, ""), isAdd: false)
             workItem.cancel()
         }
@@ -1184,7 +1229,9 @@ extension ZegoUIKitPrebuiltLiveAudioRoomVC: ZegoLiveAudioContainerViewDelegate, 
             
             for user in requestList {
                 self.addOrRemoveSeatListUser(user, isAdd: false)
-                ZegoUIKit.getSignalingPlugin().refuseInvitation(user.userID ?? "", data: "")
+                ZegoUIKit.getSignalingPlugin().refuseInvitation(user.userID ?? "", data: "") { data in
+                    
+                }
             }
         }
         
@@ -1215,6 +1262,7 @@ class ZegoUIKitPrebuiltLiveAudioVC_Help: NSObject,ZegoUIKitEventHandle, LeaveBut
             ZegoUIKit.shared.leaveRoom()
             liveAudioVC?.delegate?.onLeaveLiveAudioRoom?()
             liveAudioVC?.dismiss(animated: true)
+            ReportUtil.sharedInstance().reportEvent(audioRoomUnInitReportString, paramsDict: [:])
         }
     }
     
